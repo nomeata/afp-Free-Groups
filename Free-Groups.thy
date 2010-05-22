@@ -115,7 +115,11 @@ Finally, we can define the Free Group, and show that it is indeed a group.
 *}
 
 constdefs
-  "free_group \<equiv> (|carrier = {x :: 'a word_g_i. canceled x}, mult = \<lambda> x y . normalize (x @ y), one = []|)"
+  "free_group \<equiv> (|
+     carrier = {x :: 'a word_g_i. canceled x},
+     mult = \<lambda> x y. normalize (x @ y),
+     one = []
+  |)"
 
 lemma  "group free_group"
 proof
