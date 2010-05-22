@@ -6,21 +6,8 @@ begin
 
 text {*
 Based on the work in @{theory Cancelation}, the free group is now easily defined
-over the set of fully canceled words.
-
-Because the definition of the set is so short, we want it to be unrolled by the
-simplifier.
+over the set of fully canceled words with the corresponding operations.
 *}
-
-typedef 'a free_group_set = "{x :: 'a word_g_i. canceled x}" 
-proof-
-  have "canceled []" by simp
-  thus ?thesis by blast
-qed
-
-lemma free_group_set_simp[simp]:
-"l \<in> free_group_set = canceled l"
-by (simp add: free_group_set_def)
 
 text {*
 To define the inverse of a word, we first create a helper function that inverts
@@ -84,49 +71,43 @@ proof-
 qed
 
 lemma inv_fg_closure:
-  assumes "l \<in> free_group_set"
-  shows "inv_fg l \<in> free_group_set"
-proof-
-  from `l \<in> free_group_set` have "canceled l" by simp
-  have "canceled (inv_fg l)"
-  proof(rule ccontr)
-    assume "\<not>canceled (inv_fg l)"
-    hence "DomainP cancels_to_1 (inv_fg l)" by (simp add: canceled_def)
-    then obtain l' where "cancels_to_1 (inv_fg l) l'" by auto
-    then obtain i where "cancels_to_1_at i (inv_fg l) l'" by (auto simp add:cancels_to_1_def)
-    hence "Suc i < length (inv_fg l)"
-      and "canceling (inv_fg l ! i) (inv_fg l ! Suc i)"
-      by (auto simp add:cancels_to_1_at_def)
-    let ?x = "length l - i - 2"
-    from `Suc i < length (inv_fg l)`
-    have "Suc i < length l" by (simp add: inv_fg_def)
-    hence "Suc ?x < length l" by auto
+  assumes "canceled l"
+  shows "canceled (inv_fg l)"
+proof(rule ccontr)
+  assume "\<not>canceled (inv_fg l)"
+  hence "DomainP cancels_to_1 (inv_fg l)" by (simp add: canceled_def)
+  then obtain l' where "cancels_to_1 (inv_fg l) l'" by auto
+  then obtain i where "cancels_to_1_at i (inv_fg l) l'" by (auto simp add:cancels_to_1_def)
+  hence "Suc i < length (inv_fg l)"
+    and "canceling (inv_fg l ! i) (inv_fg l ! Suc i)"
+    by (auto simp add:cancels_to_1_at_def)
+  let ?x = "length l - i - 2"
+  from `Suc i < length (inv_fg l)`
+  have "Suc i < length l" by (simp add: inv_fg_def)
+  hence "Suc ?x < length l" by auto
 
-    moreover
-    from `Suc i < length l`
-    have "i < length l" and "length l - Suc i = Suc(length l - Suc (Suc i))" by auto
-    hence "inv_fg l ! i = inv1 (l ! Suc ?x)"
-      by (auto simp add:inv_fg_def rev_nth map_nth)
-    from `Suc i < length l`
-    have "inv_fg l ! Suc i = inv1 (l ! ?x)"
-      by (auto simp add:inv_fg_def rev_nth map_nth)
-    from `canceling (inv_fg l ! i) (inv_fg l ! Suc i)`
-     and `inv_fg l ! i = inv1 (l ! Suc ?x)`
-     and `inv_fg l ! Suc i = inv1 (l ! ?x)`
-    have "canceling (inv1 (l ! Suc ?x)) (inv1 (l ! ?x))" by auto
-    hence "canceling (inv1 (l ! ?x)) (inv1 (l ! Suc ?x))" by (rule cancel_sym)
-    hence "canceling (l ! ?x) (l ! Suc ?x)" by simp
-
-    ultimately
-    have "cancels_to_1_at ?x l (cancel_at ?x l)" 
-      by (auto simp add:cancels_to_1_at_def)
-    hence "cancels_to_1 l (cancel_at ?x l)"
-      by (auto simp add:cancels_to_1_def)
-    hence "\<not>canceled l"
-      by (auto simp add:canceled_def)
-    with `canceled l` show False by contradiction
-  qed
-  thus "inv_fg l \<in> free_group_set" by simp
+  moreover
+  from `Suc i < length l`
+  have "i < length l" and "length l - Suc i = Suc(length l - Suc (Suc i))" by auto
+  hence "inv_fg l ! i = inv1 (l ! Suc ?x)"
+    by (auto simp add:inv_fg_def rev_nth map_nth)
+  from `Suc i < length l`
+  have "inv_fg l ! Suc i = inv1 (l ! ?x)"
+    by (auto simp add:inv_fg_def rev_nth map_nth)
+  from `canceling (inv_fg l ! i) (inv_fg l ! Suc i)`
+   and `inv_fg l ! i = inv1 (l ! Suc ?x)`
+   and `inv_fg l ! Suc i = inv1 (l ! ?x)`
+  have "canceling (inv1 (l ! Suc ?x)) (inv1 (l ! ?x))" by auto
+  hence "canceling (inv1 (l ! ?x)) (inv1 (l ! Suc ?x))" by (rule cancel_sym)
+  hence "canceling (l ! ?x) (l ! Suc ?x)" by simp
+   ultimately
+  have "cancels_to_1_at ?x l (cancel_at ?x l)" 
+    by (auto simp add:cancels_to_1_at_def)
+  hence "cancels_to_1 l (cancel_at ?x l)"
+    by (auto simp add:cancels_to_1_def)
+  hence "\<not>canceled l"
+    by (auto simp add:canceled_def)
+  with `canceled l` show False by contradiction
 qed
 
 text {*
@@ -134,7 +115,7 @@ Finally, we can define the Free Group, and show that it is indeed a group.
 *}
 
 constdefs
-  "free_group \<equiv> (|carrier = free_group_set, mult = \<lambda> x y . normalize (x @ y), one = []|)"
+  "free_group \<equiv> (|carrier = {x :: 'a word_g_i. canceled x}, mult = \<lambda> x y . normalize (x @ y), one = []|)"
 
 lemma  "group free_group"
 proof
@@ -180,19 +161,19 @@ next
   proof (simp add:free_group_def Units_def, rule subsetI)
     fix x :: "'b word_g_i"
     let ?x = "inv_fg x"
-    assume "x \<in> free_group_set"
-    hence "?x \<in> free_group_set" by (rule inv_fg_closure)
+    assume "x \<in> {y. canceled y}"
+    hence "canceled ?x" by (auto elim:inv_fg_closure)
     moreover
     have "normalize (?x @ x) = []"
      and "normalize (x @ ?x) = []"
       by (auto simp add:inv_fg_cancel inv_fg_cancel2)
     ultimately
-    have "\<exists>x'\<in>free_group_set. normalize (x' @ x) = [] \<and> normalize (x @ x') = []" by auto
-    with `x \<in> free_group_set`
+    have "\<exists>x'. canceled x' \<and> normalize (x' @ x) = [] \<and> normalize (x @ x') = []" by auto
+    with `x \<in> {y. canceled y}`
     show "x \<in> {y. canceled y \<and>
-               (\<exists>x \<in>free_group_set. normalize (x @ y) = [] \<and> normalize (y @ x) = [])}"
+               (\<exists>x. canceled x \<and> normalize (x @ y) = [] \<and> normalize (y @ x) = [])}"
       by auto
-   qed
+  qed
 qed
 
 end
