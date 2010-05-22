@@ -23,13 +23,6 @@ lemma free_group_set_simp[simp]:
 by (simp add: free_group_set_def)
 
 text {*
-Multiplication is concatenation, followed by normalization.
-*}
-
-definition mult_norm :: "'a word_g_i \<Rightarrow> 'a word_g_i \<Rightarrow> 'a word_g_i"
-where "mult_norm l1 l2 = normalize (l1@l2)"
-
-text {*
 To define the inverse of a word, we first create a helper function that inverts
 a single generator, and show that it is self-inverse.
 *}
@@ -55,16 +48,15 @@ lemma cancelling_inf[simp]: "canceling (inv1 a) (inv1 b) = canceling a b"
 lemma inv_idemp: "inv_fg (inv_fg l) = l"
   by (auto simp add:inv_fg_def rev_map)
 
-lemma inv_fg_cancel: "mult_norm l (inv_fg l) = []"
+lemma inv_fg_cancel: "normalize (l @ inv_fg l) = []"
 proof(induct l rule:rev_induct)
-  show "mult_norm [] (inv_fg []) = []"
-    by (auto simp add:mult_norm_def inv_fg_def)
+  show "normalize ([] @ inv_fg []) = []"
+    by (auto simp add: inv_fg_def)
 next
   fix x :: "'a g_i"
   fix xs :: "'a word_g_i"
-  assume "mult_norm xs (inv_fg xs) = []"
-  hence "normalize (xs @ (inv_fg xs)) = []" by (auto simp add:mult_norm_def)
-
+  assume "normalize (xs @ inv_fg xs) = []"
+  
   have "canceling x (inv1 x)" by (simp add:inv1_def canceling_def)
   moreover
   let ?i = "length xs"
@@ -81,16 +73,14 @@ next
   hence "cancels_to (xs @ [x] @ (inv_fg (xs @ [x]))) (xs @ inv_fg xs)"
     by (auto simp add:cancels_to_def)
   with `normalize (xs @ (inv_fg xs)) = []`
-  have "normalize (xs @ [x] @ (inv_fg (xs @ [x]))) = []"
+  show "normalize ((xs @ [x]) @ (inv_fg (xs @ [x]))) = []"
     by auto
-  thus "mult_norm (xs @ [x]) (inv_fg (xs @ [x])) = []"
-    by (auto simp add:mult_norm_def)
 qed
 
-lemma inv_fg_cancel2: "mult_norm (inv_fg l) l = []"
+lemma inv_fg_cancel2: "normalize (inv_fg l @ l) = []"
 proof-
-  have "mult_norm (inv_fg l) (inv_fg (inv_fg l)) = []" by (rule inv_fg_cancel)
-  thus "mult_norm (inv_fg l) l = []" by (simp add: inv_idemp)
+  have "normalize (inv_fg l @ inv_fg (inv_fg l)) = []" by (rule inv_fg_cancel)
+  thus "normalize (inv_fg l @ l) = []" by (simp add: inv_idemp)
 qed
 
 lemma inv_fg_closure:
@@ -144,13 +134,13 @@ Finally, we can define the Free Group, and show that it is indeed a group.
 *}
 
 constdefs
-  "free_group \<equiv> (|carrier = free_group_set, mult = mult_norm, one = []|)"
+  "free_group \<equiv> (|carrier = free_group_set, mult = \<lambda> x y . normalize (x @ y), one = []|)"
 
 lemma  "group free_group"
 proof
   fix x y
   show "x \<otimes>\<^bsub>free_group\<^esub> y \<in> carrier free_group"
-    by (auto simp add:mult_norm_def free_group_def)
+    by (auto simp add:free_group_def)
 next
   fix x y z
   have "cancels_to (x @ y) (normalize (x @ (y::'a word_g_i)))"
@@ -171,7 +161,7 @@ next
     by simp
   thus "x \<otimes>\<^bsub>free_group\<^esub> y \<otimes>\<^bsub>free_group\<^esub> z =
         x \<otimes>\<^bsub>free_group\<^esub> (y \<otimes>\<^bsub>free_group\<^esub> z)"
-    by (auto simp add:mult_norm_def free_group_def)
+    by (auto simp add:free_group_def)
 next
   show "\<one>\<^bsub>free_group\<^esub> \<in> carrier free_group" 
     by (auto simp add:free_group_def)
@@ -179,12 +169,12 @@ next
   fix x
   assume "x \<in> carrier free_group" 
   thus "\<one>\<^bsub>free_group\<^esub> \<otimes>\<^bsub>free_group\<^esub> x = x"
-    by (auto simp add:free_group_def mult_norm_def)
+    by (auto simp add:free_group_def)
 next
   fix x
 assume "x \<in> carrier free_group"
   thus "x \<otimes>\<^bsub>free_group\<^esub> \<one>\<^bsub>free_group\<^esub> = x"
-    by (auto simp add:free_group_def mult_norm_def)
+    by (auto simp add:free_group_def)
 next
   show "carrier free_group \<subseteq> Units free_group"
   proof (simp add:free_group_def Units_def, rule subsetI)
@@ -193,14 +183,14 @@ next
     assume "x \<in> free_group_set"
     hence "?x \<in> free_group_set" by (rule inv_fg_closure)
     moreover
-    have "mult_norm ?x x = []"
-     and "mult_norm x ?x = []"
-      by (auto simp add: inv_fg_cancel inv_fg_cancel2)
+    have "normalize (?x @ x) = []"
+     and "normalize (x @ ?x) = []"
+      by (auto simp add:inv_fg_cancel inv_fg_cancel2)
     ultimately
-    have "\<exists>x'\<in>free_group_set. mult_norm x' x = [] \<and> mult_norm x x' = []" by auto
+    have "\<exists>x'\<in>free_group_set. normalize (x' @ x) = [] \<and> normalize (x @ x') = []" by auto
     with `x \<in> free_group_set`
     show "x \<in> {y. canceled y \<and>
-               (\<exists>x \<in>free_group_set. mult_norm x y = [] \<and> mult_norm y x = [])}"
+               (\<exists>x \<in>free_group_set. normalize (x @ y) = [] \<and> normalize (y @ x) = [])}"
       by auto
    qed
 qed
