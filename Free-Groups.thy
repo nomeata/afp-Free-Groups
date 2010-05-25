@@ -17,8 +17,11 @@ a single generator, and show that it is self-inverse.
 definition inv1 :: "'a g_i \<Rightarrow> 'a g_i"
  where "inv1 a = (\<not> fst a, snd a)"
 
-lemma inv1_inv1[simp]: "inv1 \<circ> inv1 = (\<lambda>x. x)"
+lemma inv1_inv1: "inv1 \<circ> inv1 = id"
   by (simp add: expand_fun_eq comp_def inv1_def)
+
+lemmas inv1_inv1_simp [simp] = inv1_inv1[unfolded id_def]
+
 
 text {*
 The inverse of a word is obtained by reversing the order of the generator and
@@ -121,7 +124,7 @@ constdefs
      one = []
   |)"
 
-lemma  "group free_group"
+theorem free_group_is_group: "group free_group"
 proof
   fix x y
   show "x \<otimes>\<^bsub>free_group\<^esub> y \<in> carrier free_group"
@@ -164,12 +167,12 @@ next
   show "carrier free_group \<subseteq> Units free_group"
   proof (simp add:free_group_def Units_def, rule subsetI)
     fix x :: "'b word_g_i"
-    let ?x = "inv_fg x"
+    let ?x' = "inv_fg x"
     assume "x \<in> {y. canceled y}"
-    hence "canceled ?x" by (auto elim:inv_fg_closure)
+    hence "canceled ?x'" by (auto elim:inv_fg_closure)
     moreover
-    have "normalize (?x @ x) = []"
-     and "normalize (x @ ?x) = []"
+    have "normalize (?x' @ x) = []"
+     and "normalize (x @ ?x') = []"
       by (auto simp add:inv_fg_cancel inv_fg_cancel2)
     ultimately
     have "\<exists>x'. canceled x' \<and> normalize (x' @ x) = [] \<and> normalize (x @ x') = []" by auto

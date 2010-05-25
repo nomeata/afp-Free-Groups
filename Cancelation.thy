@@ -189,26 +189,24 @@ proof-
   from `cancels_to_1_at (Suc i) l b`
     have "b = take (Suc i) l @ drop (Suc (Suc (Suc i))) l"
     by (simp add: cancels_to_1_at_def cancel_at_def)
-  moreover from `i < length l`
-    have "\<dots> = take i l @ [l ! i] @ drop (Suc (Suc (Suc i))) l"
+  also from `i < length l`
+  have "\<dots> = take i l @ [l ! i] @ drop (Suc (Suc (Suc i))) l"
     by(auto simp add: take_Suc_conv_app_nth)
-  moreover from `l ! i = l ! Suc (Suc i)`
-    have "\<dots> = take i l @ [l ! Suc (Suc i)] @ drop (Suc (Suc (Suc i))) l"
+  also from `l ! i = l ! Suc (Suc i)`
+  have "\<dots> = take i l @ [l ! Suc (Suc i)] @ drop (Suc (Suc (Suc i))) l"
     by simp
-  moreover from `Suc (Suc i) < length l`
-    have "\<dots> = take i l @ drop (Suc (Suc i)) l"
+  also from `Suc (Suc i) < length l`
+  have "\<dots> = take i l @ drop (Suc (Suc i)) l"
     by (simp add: drop_Suc_conv_tl)
-  moreover from `cancels_to_1_at i l a` have
-    "\<dots> = a"
+  also from `cancels_to_1_at i l a` have "\<dots> = a"
     by (simp add: cancels_to_1_at_def cancel_at_def)
-  ultimately show "a = b"
-    by (simp )
+  finally show "a = b" by(rule sym)
 qed
 
 lemma canceling_indep:
   assumes "cancels_to_1_at i l a" and "cancels_to_1_at j l b" and "j > Suc i"
-  shows "\<exists> c. cancels_to_1_at (j - 2) a c \<and> cancels_to_1_at i b c"
-proof-
+  obtains c where "cancels_to_1_at (j - 2) a c" and "cancels_to_1_at i b c"
+proof(atomize_elim)
   from `cancels_to_1_at i l a`
     have "Suc i < length l"
      and "canceling (l ! i) (l ! Suc i)"
@@ -224,50 +222,49 @@ proof-
     by (auto simp add:cancels_to_1_at_def)
 
   let ?c = "cancel_at (j - 2) a"
-  have "cancels_to_1_at (j - 2) a ?c \<and> cancels_to_1_at i b ?c"
-  proof
-    from `j > Suc i`
-      have "Suc (Suc (j - 2)) = j"
-       and "Suc (Suc (Suc j - 2)) = Suc j"
-      by auto
-    with `min (length l) i = i` and `j > Suc i` and `Suc j < length l`
-    have "(l ! j) = (cancel_at i l ! (j - 2))"
-     and "(l ! (Suc j)) = (cancel_at i l ! Suc (j - 2))"
-     by(auto simp add:cancel_at_def simp add:nth_append)
+  from `j > Suc i`
+  have "Suc (Suc (j - 2)) = j"
+    and "Suc (Suc (Suc j - 2)) = Suc j"
+    by auto
+  with `min (length l) i = i` and `j > Suc i` and `Suc j < length l`
+  have "(l ! j) = (cancel_at i l ! (j - 2))"
+    and "(l ! (Suc j)) = (cancel_at i l ! Suc (j - 2))"
+    by(auto simp add:cancel_at_def simp add:nth_append)
+  
+  with `cancels_to_1_at i l a`
+    and `cancels_to_1_at j l b`
+  have "canceling (a ! (j - 2)) (a ! Suc (j - 2))"
+    by(auto simp add:cancels_to_1_at_def)
+  
+  with `j > Suc i` and `Suc j < length l` and `length a = length l - 2`
+  have "cancels_to_1_at (j - 2) a ?c" by (auto simp add: cancels_to_1_at_def)
 
-    with `cancels_to_1_at i l a`
-     and `cancels_to_1_at j l b`
-    have "canceling (a ! (j - 2)) (a ! Suc (j - 2))"
-      by(auto simp add:cancels_to_1_at_def)
+  from `length b = length l - 2` and `j > Suc i` and `Suc j < length l`
+  have "Suc i < length b" by auto
+  
+  moreover from `b = cancel_at j l` and `j > Suc i` and `Suc i < length l`
+  have "(b ! i) = (l ! i)" and "(b ! Suc i) = (l ! Suc i)"
+    by (auto simp add:cancel_at_def nth_append)
+  with `canceling (l ! i) (l ! Suc i)`
+  have "canceling (b ! i) (b ! Suc i)" by simp
+  
+  moreover from `j > Suc i` and `Suc j < length l`
+  have "min i j = i"
+    and "min (j - 2) i = i"
+    and "min (length l) j = j"
+    and "min (length l) i = i"
+    and "Suc (Suc (j - 2)) = j"
+    by auto
+  with `a = cancel_at i l` and `b = cancel_at j l` and `Suc (Suc (j - 2)) = j`
+  have "cancel_at (j - 2) a = cancel_at i b"
+    by (auto simp add:cancel_at_def take_drop)
+  
+  ultimately have "cancels_to_1_at i b (cancel_at (j - 2) a)"
+    by (auto simp add:cancels_to_1_at_def)
 
-    with `j > Suc i` and `Suc j < length l` and `length a = length l - 2`
-    show "cancels_to_1_at (j - 2) a ?c" by (auto simp add: cancels_to_1_at_def)
-  next
-    from `length b = length l - 2` and `j > Suc i` and `Suc j < length l`
-      have "Suc i < length b" by auto
-
-    moreover from `b = cancel_at j l` and `j > Suc i` and `Suc i < length l`
-      have "(b ! i) = (l ! i)" and "(b ! Suc i) = (l ! Suc i)"
-      by (auto simp add:cancel_at_def nth_append)
-    with `canceling (l ! i) (l ! Suc i)`
-      have "canceling (b ! i) (b ! Suc i)" by simp
-
-    moreover from `j > Suc i` and `Suc j < length l`
-      have "min i j = i"
-       and "min (j - 2) i = i"
-       and "min (length l) j = j"
-       and "min (length l) i = i"
-       and "Suc (Suc (j - 2)) = j"
-      by auto
-    with `a = cancel_at i l` and `b = cancel_at j l` and `Suc (Suc (j - 2)) = j`
-      have "cancel_at (j - 2) a = cancel_at i b"
-      by (auto simp add:cancel_at_def take_drop)
-
-    ultimately show "cancels_to_1_at i b (cancel_at (j - 2) a)"
-      by (auto simp add:cancels_to_1_at_def)
-  qed
-  thus ?thesis by(rule exI)
-qed (* This takes very long in i3p. Why? I just showed everything? Can I speed it up? *)
+  with `cancels_to_1_at (j - 2) a ?c`
+  show "\<exists>c. cancels_to_1_at (j - 2) a c \<and> cancels_to_1_at i b c" by blast
+qed
 
 text {* This is the confluence lemma *}
 
@@ -321,17 +318,27 @@ next
           assume "i < j"
             with `j \<noteq> Suc i` have "Suc i < j" by auto
           with `cancels_to_1_at i a b` and `cancels_to_1_at j a c`
-            have "\<exists>d. cancels_to_1_at (j - 2) b d \<and> cancels_to_1_at i c d" by (auto elim: canceling_indep)
-          then obtain d where "cancels_to_1_at (j - 2) b d \<and> cancels_to_1_at i c d" by (erule exE)
-          hence "cancels_to_1 b d \<and> cancels_to_1 c d" by (auto simp add:cancels_to_1_def)
+          obtain d where "cancels_to_1_at (j - 2) b d" and "cancels_to_1_at i c d"
+            by(erule canceling_indep)
+          hence "cancels_to_1 b d" and "cancels_to_1 c d" 
+            by (auto simp add:cancels_to_1_def)
+          (* ersetzt
+              have "\<exists>d. cancels_to_1_at (j - 2) b d \<and> cancels_to_1_at i c d" by (auto elim: canceling_indep)
+              then obtain d where "cancels_to_1_at (j - 2) b d \<and> cancels_to_1_at i c d" by (erule exE)
+              hence "cancels_to_1 b d \<and> cancels_to_1 c d" by (auto simp add:cancels_to_1_def)*)
           thus "\<exists>d. cancels_to_1\<^sup>*\<^sup>* b d \<and> cancels_to_1\<^sup>*\<^sup>* c d" by (auto)
         next
           assume "\<not> i < j"
-            with `j \<noteq> Suc i` and `i \<noteq> j` and `i \<noteq> Suc j` have "Suc j < i" by auto
+          with `j \<noteq> Suc i` and `i \<noteq> j` and `i \<noteq> Suc j` have "Suc j < i" by auto
           with `cancels_to_1_at i a b` and `cancels_to_1_at j a c`
-            have "\<exists>d. cancels_to_1_at (i - 2) c d \<and> cancels_to_1_at j b d" by (auto elim: canceling_indep)
-          then obtain d where "cancels_to_1_at (i - 2) c d \<and> cancels_to_1_at j b d" by (erule exE)
-          hence "cancels_to_1 b d \<and> cancels_to_1 c d" by (auto simp add:cancels_to_1_def)
+          obtain d where "cancels_to_1_at (i - 2) c d" and "cancels_to_1_at j b d"
+            by -(erule canceling_indep)
+          hence "cancels_to_1 b d" and "cancels_to_1 c d" 
+            by (auto simp add:cancels_to_1_def)
+              (* ersetzt
+              have "\<exists>d. cancels_to_1_at (i - 2) c d \<and> cancels_to_1_at j b d" by (auto elim: canceling_indep)
+              then obtain d where "cancels_to_1_at (i - 2) c d \<and> cancels_to_1_at j b d" by (erule exE)
+              hence "cancels_to_1 b d \<and> cancels_to_1 c d" by (auto simp add:cancels_to_1_def)*)
           thus "\<exists>d. cancels_to_1\<^sup>*\<^sup>* b d \<and> cancels_to_1\<^sup>*\<^sup>* c d" by (auto)
         qed
       qed
@@ -344,8 +351,8 @@ And finally, we show that there exists a unique normal form for each word.
 *}
 
 lemma inv_rtrcl: "R^**^--1 = R^--1^**" (* Did I overlook this in the standard libs? *)
-apply (auto simp add:expand_fun_eq intro: dest:rtranclp_converseD intro:rtranclp_converseI)
-done
+by (auto simp add:expand_fun_eq intro: dest:rtranclp_converseD intro:rtranclp_converseI)
+
 
 lemma norm_form_uniq:
   assumes "cancels_to a b"
