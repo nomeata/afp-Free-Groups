@@ -22,6 +22,11 @@ lemma inv1_inv1: "inv1 \<circ> inv1 = id"
 
 lemmas inv1_inv1_simp [simp] = inv1_inv1[unfolded id_def]
 
+lemma snd_inv1: "snd \<circ> inv1 = snd"
+proof 
+  fix x
+  show "(snd \<circ> inv1) x = snd x" by (cases x, auto simp add:inv1_def)
+qed
 
 text {*
 The inverse of a word is obtained by reversing the order of the generator and
@@ -71,7 +76,7 @@ proof-
   thus "normalize (inv_fg l @ l) = []" by (simp add: inv_idemp)
 qed
 
-lemma inv_fg_closure:
+lemma inv_fg_closure1:
   assumes "canceled l"
   shows "canceled (inv_fg l)"
 proof(rule ccontr)
@@ -111,22 +116,53 @@ proof(rule ccontr)
   with `canceled l` show False by contradiction
 qed
 
+
+lemma inv_fg_closure2:
+  "occuring_generators (inv_fg l) = occuring_generators l"
+ unfolding occuring_generators_def and inv_fg_def
+proof-
+  have "set (map snd (rev (map inv1 l))) = set (rev (map snd (map inv1 l)))" by auto
+  also have "\<dots> = set (rev (map (snd \<circ> inv1) l))" by auto
+  also have "... = set (rev (map snd l))" by (simp add: snd_inv1)
+  also have "\<dots> = set (map snd l)" by simp
+  finally
+  show "set (map snd (rev (map inv1 l))) = set (map snd l)".
+qed
+
 text {*
 Finally, we can define the Free Group, and show that it is indeed a group.
 *}
 
 definition free_group
 where 
-  "free_group \<equiv> (|
-     carrier = {x :: 'a word_g_i. canceled x},
+  "free_group gens \<equiv> (|
+     carrier = {l :: 'a word_g_i. canceled l \<and> occuring_generators l \<subseteq> gens },
      mult = \<lambda> x y. normalize (x @ y),
      one = []
   |)"
 
-theorem free_group_is_group: "group free_group"
+lemma occuring_gens_in_element:
+  "x \<in> carrier (free_group gens) \<Longrightarrow> occuring_generators x \<subseteq> gens"
+by(auto simp add:free_group_def)
+
+theorem free_group_is_group: "group (free_group gens)"
 proof
   fix x y
-  show "x \<otimes>\<^bsub>free_group\<^esub> y \<in> carrier free_group"
+  assume "x \<in> carrier (free_group gens)" hence x: "occuring_generators x \<subseteq> gens" by
+    (rule occuring_gens_in_element)
+  assume "y \<in> carrier (free_group gens)" hence y: "occuring_generators y \<subseteq> gens" by
+    (rule occuring_gens_in_element)
+
+  have "occuring_generators (x \<otimes>\<^bsub>free_group gens\<^esub> y) = occuring_generators (normalize (x @ y))"
+    by (auto simp add:free_group_def)
+  also have "\<dots> \<subseteq> occuring_generators (x @ y)"
+    by (rule normalize_preserves_generators)
+  also have "\<dots> \<subseteq> occuring_generators x \<union> occuring_generators y"
+    by (rule occuring_generators_concat)
+  also from x and y have "\<dots> \<subseteq> gens" by simp
+  finally have "occuring_generators (x \<otimes>\<^bsub>free_group gens\<^esub> y) \<subseteq> gens".
+  
+  thus "x \<otimes>\<^bsub>free_group gens\<^esub> y \<in> carrier (free_group gens)"
     by (auto simp add:free_group_def)
 next
   fix x y z
@@ -144,38 +180,39 @@ next
   hence "normalize (x @ (y @ z)) = normalize (x @ normalize (y @ z))"
     by -(rule normalize_append_cancel_to)
   finally
-  show "x \<otimes>\<^bsub>free_group\<^esub> y \<otimes>\<^bsub>free_group\<^esub> z =
-        x \<otimes>\<^bsub>free_group\<^esub> (y \<otimes>\<^bsub>free_group\<^esub> z)"
+  show "x \<otimes>\<^bsub>free_group gens\<^esub> y \<otimes>\<^bsub>free_group gens\<^esub> z =
+        x \<otimes>\<^bsub>free_group gens\<^esub> (y \<otimes>\<^bsub>free_group gens\<^esub> z)"
     by (auto simp add:free_group_def)
 next
-  show "\<one>\<^bsub>free_group\<^esub> \<in> carrier free_group" 
-    by (auto simp add:free_group_def)
-next
-  fix x
-  assume "x \<in> carrier free_group" 
-  thus "\<one>\<^bsub>free_group\<^esub> \<otimes>\<^bsub>free_group\<^esub> x = x"
+  show "\<one>\<^bsub>free_group gens\<^esub> \<in> carrier (free_group gens)"
     by (auto simp add:free_group_def)
 next
   fix x
-  assume "x \<in> carrier free_group"
-  thus "x \<otimes>\<^bsub>free_group\<^esub> \<one>\<^bsub>free_group\<^esub> = x"
+  assume "x \<in> carrier (free_group gens)"
+  thus "\<one>\<^bsub>free_group gens\<^esub> \<otimes>\<^bsub>free_group gens\<^esub> x = x"
     by (auto simp add:free_group_def)
 next
-  show "carrier free_group \<subseteq> Units free_group"
+  fix x
+  assume "x \<in> carrier (free_group gens)"
+  thus "x \<otimes>\<^bsub>free_group gens\<^esub> \<one>\<^bsub>free_group gens\<^esub> = x"
+    by (auto simp add:free_group_def)
+next
+  show "carrier (free_group gens) \<subseteq> Units (free_group gens)"
   proof (simp add:free_group_def Units_def, rule subsetI)
-    fix x :: "'b word_g_i"
+    fix x :: "'a word_g_i"
     let ?x' = "inv_fg x"
-    assume "x \<in> {y. canceled y}"
-    hence "canceled ?x'" by (auto elim:inv_fg_closure)
+    assume "x \<in> {y. canceled y \<and> occuring_generators y \<subseteq> gens}"
+    hence "canceled ?x' \<and> occuring_generators ?x' \<subseteq> gens" by (auto elim:inv_fg_closure1 simp add:inv_fg_closure2)
     moreover
     have "normalize (?x' @ x) = []"
      and "normalize (x @ ?x') = []"
       by (auto simp add:inv_fg_cancel inv_fg_cancel2)
     ultimately
-    have "\<exists>x'. canceled x' \<and> normalize (x' @ x) = [] \<and> normalize (x @ x') = []" by auto
-    with `x \<in> {y. canceled y}`
-    show "x \<in> {y. canceled y \<and>
-               (\<exists>x. canceled x \<and> normalize (x @ y) = [] \<and> normalize (y @ x) = [])}"
+    have "\<exists>x'. canceled x' \<and> occuring_generators x' \<subseteq> gens \<and> normalize (x' @ x) = [] \<and> normalize (x @ x') = []" by auto
+    with `x \<in> {y. canceled y \<and> occuring_generators y \<subseteq> gens}`
+    show "x \<in> {y. canceled y \<and> occuring_generators y \<subseteq> gens \<and>
+          (\<exists>x. canceled x \<and> occuring_generators x \<subseteq> gens \<and>
+              normalize (x @ y) = [] \<and> normalize (y @ x) = [])}"
       by auto
   qed
 qed
