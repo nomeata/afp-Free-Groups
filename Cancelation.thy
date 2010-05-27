@@ -535,4 +535,66 @@ next
   show "cancels_to (l1 @ l2) (normalize (l1' @ l2'))".
 qed
 
+subsection {* Normalization does not add preserves elements *}
+
+text {*
+Somewhat obvious, but still required to formalize Free Groups, is the fact that
+canceling a word of generators of a specific set (and their inverses) results
+in a word in generators from that set.
+*}
+
+definition occuring_generators :: "'a word_g_i \<Rightarrow> 'a set"
+ where "occuring_generators l = set (map snd l)"
+
+lemma cancels_to_1_preserves_generators:
+  assumes "cancels_to_1 l l'"
+  shows "occuring_generators l' \<subseteq> occuring_generators l"
+proof-
+  have "occuring_generators l' = set (map snd l')" by (rule occuring_generators_def)
+  also
+  from assms obtain i where "l' = cancel_at i l" 
+    unfolding cancels_to_1_def and cancels_to_1_at_def by auto
+  hence "l' = take i l @ drop (2 + i) l" unfolding cancel_at_def .
+  hence "set (map snd l') = set (map snd (take i l @ drop (2 + i) l))" by simp
+  also 
+  have "\<dots> = snd ` set (take i l @ drop (2 + i) l)" by auto
+  also
+  have "\<dots> \<subseteq>  snd ` (set (take i l) \<union> set (drop (2 + i) l))" by auto
+  also
+  have "\<dots> \<subseteq>  snd ` set l" by (auto dest: in_set_takeD in_set_dropD)
+  also
+  have "\<dots> =  occuring_generators l" unfolding occuring_generators_def by simp
+  finally show ?thesis .
+qed
+
+lemma cancels_to_preserves_generators:
+  assumes "cancels_to l l'"
+  shows "occuring_generators l' \<subseteq> occuring_generators l"
+using assms
+unfolding cancels_to_def
+proof induct
+  case (step y z)
+    from `cancels_to_1 y z`
+    have "occuring_generators z \<subseteq> occuring_generators y" by (rule cancels_to_1_preserves_generators)
+    with `occuring_generators y \<subseteq> occuring_generators l`
+    show "occuring_generators z \<subseteq> occuring_generators l" by simp
+qed(simp)
+
+lemma normalize_preserves_generators:
+  shows "occuring_generators (normalize l) \<subseteq> occuring_generators l"
+proof-
+  have "cancels_to l (normalize l)" by simp
+  thus ?thesis by(rule cancels_to_preserves_generators)
+qed
+
+lemma occuring_generators_concat:
+  "occuring_generators (l@l') \<subseteq> occuring_generators l \<union> occuring_generators l'"
+unfolding occuring_generators_def
+by auto
+
+lemma occuring_generators_empty[simp]:
+"occuring_generators [] = {}"
+unfolding occuring_generators_def
+by auto
+
 end
