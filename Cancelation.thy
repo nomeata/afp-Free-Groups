@@ -446,7 +446,6 @@ lemma
   shows normalized_canceled[simp]: "canceled (normalize l)"
   and   normalized_cancels_to[simp]: "cancels_to l (normalize l)"
 proof-
-  thm canceling_terminates
   let ?Q = "{l'. cancels_to_1^** l l'}"
   have "l \<in> ?Q" by (auto) hence "\<exists>x. x \<in> ?Q" by (rule exI)
 
