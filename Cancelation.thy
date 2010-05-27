@@ -35,7 +35,6 @@ by(auto elim: converse_tranclpE)
 
 lemma confluent_unique_normal_form:
   "\<lbrakk> confluent R; R^** a b; R^** a c; \<not> DomainP R b; \<not> DomainP R c  \<rbrakk> \<Longrightarrow> b = c"
--- "AL: komprimierter Beweis"
 by(fastsimp dest!: confluentD[of R a b c] dest: tranclp_DomainP rtranclpD[where a=b] rtranclpD[where a=c])
 
 subsection {* Definition of the @{term "canceling"} relation *}
@@ -123,19 +122,11 @@ where "cancels_to_1 l1 l2 = (\<exists>i. cancels_to_1_at i l1 l2)"
 definition cancels_to  :: "'a word_g_i \<Rightarrow> 'a word_g_i \<Rightarrow> bool"
 where "cancels_to = cancels_to_1^**"
 
--- "AL: [trans] deklariert Transitivitaetsregeln, die man mit also verwenden kann"
 lemma cancels_to_trans [trans]: "\<lbrakk> cancels_to a b; cancels_to b c \<rbrakk> \<Longrightarrow> cancels_to a c"
 by (auto simp add:cancels_to_def)
 
 definition canceled :: "'a word_g_i \<Rightarrow> bool"
  where "canceled l = (\<not> DomainP cancels_to_1 l)"
-
-(*
-lemma "cancels_to_1 [(True,(1::nat)),(False,1)] []"
-  by (auto simp add:cancels_to_1_def canceling_def cancel_at_def cancels_to_1_at_def)
-lemma "cancels_to [(True,(1::nat)),(False,1)] []"
-  by (auto simp add:cancels_to_1_def canceling_def cancel_at_def cancels_to_1_at_def)
-*)
 
 subsubsection {* Existence of the normal form *}
 
@@ -155,15 +146,12 @@ done
 lemma canceling_terminates: "wfP (cancels_to_1^--1)"
 proof-
   have "wf (measure length)" by auto
-  -- "AL" 
   moreover
   have "{(x, y). cancels_to_1 y x} \<subseteq> measure length"
     by (auto simp add: cancels_to_1_def cancel_at_def cancels_to_1_at_def)
-  ultimately -- "AL" (* with `wf (measure length)` *)
+  ultimately
   have "wf {(x, y). cancels_to_1 y x}"
     by(rule wf_subset)
-  -- "AL: ersetzt:"
-  (*by(rule_tac r = "measure size" in wf_subset)*)
   thus ?thesis by (simp add:wfP_def)
 qed
 
@@ -268,7 +256,6 @@ proof(atomize_elim)
 qed
 
 text {* This is the confluence lemma *}
--- "AL: Besserer Name? z.B. confluent_cancels_to_1"
 lemma lconf: "confluent cancels_to_1"
 proof(rule lconfluent_confluent)
   show "wfP cancels_to_1\<inverse>\<inverse>" by (rule canceling_terminates)
@@ -277,11 +264,9 @@ next
   assume "cancels_to_1 a b"
   then obtain i where "cancels_to_1_at i a b"
     by(simp add: cancels_to_1_def)(erule exE)
-    -- "AL: ersetzt by -(simp add: cancels_to_1_def, erule exE)"
   assume "cancels_to_1 a c"
   then obtain j where "cancels_to_1_at j a c"
     by(simp add: cancels_to_1_def)(erule exE)
-    -- "AL: ersetzt by -(simp add: cancels_to_1_def, erule exE)"
 
   show "\<exists>d. cancels_to_1\<^sup>*\<^sup>* b d \<and> cancels_to_1\<^sup>*\<^sup>* c d"
   proof (cases "i=j")
@@ -391,7 +376,6 @@ lemma cancel_to_1_append:
   shows "cancels_to_1 (l@a@l') (l@b@l')"
 proof-
   from `cancels_to_1 a b` obtain i where "cancels_to_1_at i a b"
-    -- "AL ersetzt: by -(simp add: cancels_to_1_def, erule exE)"
     by(simp add: cancels_to_1_def)(erule exE)
   hence "cancels_to_1_at (length l + i) (l@a@l') (l@b@l')"
     by (auto simp add:cancels_to_1_at_def nth_append cancel_at_def)
@@ -415,19 +399,6 @@ proof-
     with `cancels_to (l @ a @ l') (l @ b @ l')` show ?case
       by (auto simp add:cancels_to_def)
   qed
-
-  (* AL ersetzt:
-  proof(induct rule:rtranclp.induct)
-    fix a
-    show "cancels_to (l @ a @ l') (l @ a @ l')" by (simp add:cancels_to_def)
-  next
-    fix a b c
-    assume "cancels_to (l @ a @ l') (l @ b @ l')"
-    assume "cancels_to_1 b c"
-    hence "cancels_to_1 (l @ b @ l') (l @ c @ l')" by (rule cancel_to_1_append)
-    with `cancels_to (l @ a @ l') (l @ b @ l')`
-    show "cancels_to (l @ a @ l') (l @ c @ l')" by (auto simp add:cancels_to_def)
-  qed *)
 qed
 
 lemma cancels_to_append2:
@@ -448,25 +419,6 @@ proof-
       by(rule cancel_to_1_append)
     with `cancels_to (a @ b) (ba @ b')` show ?case by (simp add:cancels_to_def)
   qed
-  (* AL: ersetzt
-  proof(induct rule:rtranclp.induct)
-   fix a
-   from `cancels_to b b'`
-   have "cancels_to (a@b@[]) (a@b'@[])" by (rule cancel_to_append)
-   thus "cancels_to (a@b) (a@b')" by simp
-  next
-   fix a ba c
-   assume "cancels_to_1 (ba :: (bool \<times> 'a) list) c"
-      -- "Why do I have to fix the type here?"
-      -- "AL: because Isabelle first tries to type-check your terms and infers the most general types. Only at the show command it tries to match the assumtions and fixes with the actual goals."
-      
-   hence "cancels_to_1 ([]@ba@b') ([]@c@b')" by (rule cancel_to_1_append)
-   hence "cancels_to_1 (ba@b') (c@b')" by simp
-   moreover
-   assume "cancels_to (a @ b) (ba @ b')"
-   ultimately
-   show "cancels_to (a @ b) (c @ b')" by (simp add:cancels_to_def)
-  qed *)
 qed
 
 text {*
@@ -509,7 +461,7 @@ proof-
   hence "(\<exists>x. x \<in> ?Q) \<longrightarrow> (\<exists>z\<in>?Q. \<forall>y. cancels_to_1 z y \<longrightarrow> y \<notin> ?Q)"
     by (erule_tac x="?Q" in allE)
   then obtain l' where "l' \<in> ?Q" and minimal: "\<And>y. cancels_to_1 l' y \<Longrightarrow> y \<notin> ?Q"
-    (* AL ersetzt: "(\<forall>y. cancels_to_1 l' y \<longrightarrow> y \<notin> ?Q)" *) by auto
+    by auto
   
   from `l' \<in> ?Q` have "cancels_to l l'" by (auto simp add: cancels_to_def)
 
@@ -519,10 +471,6 @@ proof-
     then obtain y where "cancels_to_1 l' y" by auto
     with `cancels_to l l'` have "cancels_to l y" by (auto simp add: cancels_to_def)
     from `cancels_to_1 l' y` have "y \<notin> ?Q" by(rule minimal)
-    (* AL: ersetzt
-      from `\<forall>y. cancels_to_1 l' y \<longrightarrow> y \<notin> ?Q`
-      have "cancels_to_1 l' y \<longrightarrow> y \<notin> ?Q" by auto
-      with `cancels_to_1 l' y` have "y \<notin> ?Q" by -(rule mp) *)
     hence "\<not> cancels_to_1^** l y" by auto
     hence "\<not> cancels_to l y" by (simp add: cancels_to_def)
     with `cancels_to l y` show False by contradiction
@@ -532,7 +480,7 @@ proof-
   have "cancels_to l l' \<and> canceled l'" by simp 
   hence "cancels_to l (normalize l) \<and> canceled (normalize l)"
     unfolding normalize_def
-  proof ((*simp add:normalize_def, *)rule theI)
+  proof (rule theI)
     fix l'a
     assume "cancels_to l l'a \<and> canceled l'a"
     thus "l'a = l'" using `cancels_to l l' \<and> canceled l'` by (auto elim:norm_form_uniq)
@@ -571,14 +519,6 @@ lemma normalize_idemp[simp]:
 using assms
 by(rule normalize_discover)(rule cancels_to_self)
 
-(* AL ersetzt:
-proof(rule normalize_discover)
-  from `canceled l` show "canceled l".
-next
-  show "cancels_to l l" by (rule cancels_to_self)
-qed
-*)
-
 text {*
 This lemma lifts the distributivity results from above to the normalize
 function.
@@ -593,10 +533,10 @@ proof(rule normalize_discover)
 next
   from `cancels_to l1 l1'` and `cancels_to l2 l2'`
   have "cancels_to (l1 @ l2) (l1' @ l2')" by (rule cancels_to_append2)
-  also -- "AL ersetzt:  moreover"
+  also
   have "cancels_to (l1' @ l2') (normalize (l1' @ l2'))" by (rule normalized_cancels_to)
-  finally -- "AL ersetzt: ultimately"
-  show "cancels_to (l1 @ l2) (normalize (l1' @ l2'))" . -- "AL ersetzt  by (rule cancels_to_trans)"
+  finally
+  show "cancels_to (l1 @ l2) (normalize (l1' @ l2'))".
 qed
 
 end

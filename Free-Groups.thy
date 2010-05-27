@@ -1,6 +1,5 @@
 header {* Definition of the Free Group *}
 
--- "AL: Theorienamen sollten keine - enthalten, besser _. Im LaTex-Dokumentenpraeparationsmodus sieht das besser aus."
 theory "Free-Groups"
 imports "Cancelation"
 begin
@@ -42,14 +41,9 @@ lemma inv_idemp: "inv_fg (inv_fg l) = l"
 lemma inv_fg_cancel: "normalize (l @ inv_fg l) = []"
 proof(induct l rule:rev_induct)
   case Nil thus ?case
-(* AL ersetzt:  show "normalize ([] @ inv_fg []) = []" *)
     by (auto simp add: inv_fg_def)
 next
   case (snoc x xs)
-  (* AL ersetzt:
-  fix x :: "'a g_i"
-  fix xs :: "'a word_g_i"
-  assume "normalize (xs @ inv_fg xs) = []" *)
   
   have "canceling x (inv1 x)" by (simp add:inv1_def canceling_def)
   moreover
@@ -121,14 +115,6 @@ text {*
 Finally, we can define the Free Group, and show that it is indeed a group.
 *}
 
--- "AL: constdefs ist veraltet und sollte nicht mehr verwendet werden. Dafuer gibt es jetzt definition"
-(*constdefs
-  "free_group \<equiv> (|
-     carrier = {x :: 'a word_g_i. canceled x},
-     mult = \<lambda> x y. normalize (x @ y),
-     one = []
-  |)" *)
-
 definition free_group
 where 
   "free_group \<equiv> (|
@@ -149,18 +135,15 @@ next
     by auto
   hence "normalize (normalize (x @ y) @ z) = normalize ((x @ y) @ z)"
     by (rule normalize_append_cancel_to[THEN sym])
-  -- "AL ersetzt: moreover"
   also
   have "\<dots> = normalize (x @ (y @ z))" by auto
-  also -- "AL ersetzt: moreover"
+  also
   have "cancels_to (y @ z) (normalize (y @ (z::'a word_g_i)))"
    and "cancels_to x (x::'a word_g_i)"
     by auto
   hence "normalize (x @ (y @ z)) = normalize (x @ normalize (y @ z))"
     by -(rule normalize_append_cancel_to)
-  finally (* AL ersetzt: ultimately
-  have "normalize (normalize (x @ y) @ z) = normalize (x @ normalize (y @ z))"
-    by simp then *)
+  finally
   show "x \<otimes>\<^bsub>free_group\<^esub> y \<otimes>\<^bsub>free_group\<^esub> z =
         x \<otimes>\<^bsub>free_group\<^esub> (y \<otimes>\<^bsub>free_group\<^esub> z)"
     by (auto simp add:free_group_def)
