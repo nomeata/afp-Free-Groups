@@ -256,7 +256,7 @@ proof(atomize_elim)
 qed
 
 text {* This is the confluence lemma *}
-lemma lconf: "confluent cancels_to_1"
+lemma confluent_cancels_to_1: "confluent cancels_to_1"
 proof(rule lconfluent_confluent)
   show "wfP cancels_to_1\<inverse>\<inverse>" by (rule canceling_terminates)
 next
@@ -351,7 +351,7 @@ lemma norm_form_uniq:
       and "canceled c"
   shows "b = c"
 proof-
-  have "confluent cancels_to_1" by (rule lconf)
+  have "confluent cancels_to_1" by (rule confluent_cancels_to_1)
   moreover 
   from `cancels_to a b` have "cancels_to_1^** a b" by (simp add: cancels_to_def)
   moreover
