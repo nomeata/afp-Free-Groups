@@ -386,39 +386,35 @@ qed
 lemma cancel_to_append:
   assumes "cancels_to a b"
   shows "cancels_to (l@a@l') (l@b@l')"
-proof-
-  from `cancels_to a b`
-  have "cancels_to_1^** a b" by (simp add:cancels_to_def)
-  thus ?thesis
-  proof(induct)
-    case base show ?case by (simp add:cancels_to_def)
-  next
-    case (step b c)
-    from `cancels_to_1 b c`
-    have "cancels_to_1 (l @ b @ l') (l @ c @ l')" by (rule cancel_to_1_append)
-    with `cancels_to (l @ a @ l') (l @ b @ l')` show ?case
-      by (auto simp add:cancels_to_def)
-  qed
+using assms
+unfolding cancels_to_def
+proof(induct)
+  case base show ?case by (simp add:cancels_to_def)
+next
+  case (step b c)
+  from `cancels_to_1 b c`
+  have "cancels_to_1 (l @ b @ l') (l @ c @ l')" by (rule cancel_to_1_append)
+  with `cancels_to_1^** (l @ a @ l') (l @ b @ l')` show ?case
+    by (auto simp add:cancels_to_def)
 qed
 
 lemma cancels_to_append2:
   assumes "cancels_to a a'"
       and "cancels_to b b'"
   shows "cancels_to (a@b) (a'@b')"
-proof-
-  from `cancels_to a a'`
-  have "cancels_to_1^** a a'" by (simp add:cancels_to_def)
-  thus ?thesis
-  proof induct
-    case base
-    from `cancels_to b b'` have "cancels_to (a@b@[]) (a@b'@[])" by (rule cancel_to_append)
-    thus ?case by simp
-  next
-    case (step ba c)
-    from `cancels_to_1 ba c` have "cancels_to_1 ([]@ba@b') ([]@c@b')"
-      by(rule cancel_to_1_append)
-    with `cancels_to (a @ b) (ba @ b')` show ?case by (simp add:cancels_to_def)
-  qed
+using `cancels_to a a'`
+unfolding cancels_to_def
+proof(induct)
+  case base
+  from `cancels_to b b'` have "cancels_to (a@b@[]) (a@b'@[])"
+    by (rule cancel_to_append)
+  thus ?case unfolding cancels_to_def by simp
+next
+  case (step ba c)
+  from `cancels_to_1 ba c` have "cancels_to_1 ([]@ba@b') ([]@c@b')"
+    by(rule cancel_to_1_append)
+  with `cancels_to_1^** (a @ b) (ba @ b')`
+  show ?case unfolding cancels_to_def by simp
 qed
 
 text {*
@@ -495,7 +491,7 @@ lemma normalize_discover:
 proof-
   from `canceled l'` and `cancels_to l l'`
   have "cancels_to l l' \<and> canceled l'" by auto
-  thus ?thesis by (auto simp add:normalize_def elim:norm_form_uniq)
+  thus ?thesis unfolding normalize_def by (auto elim:norm_form_uniq)
 qed
 
 text {* Words, related by cancelation, have the same normal form *}
