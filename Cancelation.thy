@@ -15,8 +15,12 @@ transitive hull of that relation. Due to confluence, this relation has a normal
 form, allowing for the definition of @{term normalize}.
 *}
 
+subsection {* Auxillary results *}
 
-subsection {* Auxillary results about relations *}
+text {* Some lemmas that would be useful in a more general setting are
+collected beforehand *}
+
+subsubsection {* Auxillary results about relations *}
 
 text {*
 These were helpfully provided by Andreas Lochbihler.
@@ -37,7 +41,7 @@ lemma confluent_unique_normal_form:
   "\<lbrakk> confluent R; R^** a b; R^** a c; \<not> DomainP R b; \<not> DomainP R c  \<rbrakk> \<Longrightarrow> b = c"
 by(fastsimp dest!: confluentD[of R a b c] dest: tranclp_DomainP rtranclpD[where a=b] rtranclpD[where a=c])
 
-subsection {* Auxillary results about @{text prod_fun} *}
+subsubsection {* Auxillary results about @{text prod_fun} *}
 
 text {* Two simple rules that would fit well in @{theory Product_Type}, where there
    already is @{term snd_apnsnd} et. al. *}
@@ -51,6 +55,84 @@ lemma fst_prod_fun'[simp]: "fst \<circ> prod_fun f g = f \<circ> fst"
 lemma snd_prod_fun'[simp]: "snd \<circ> prod_fun f g = g \<circ> snd"
   by (rule,auto)
 
+text {* More lemmas, relating injectivity and @{term prod_fun}. *}
+
+lemma prod_fun_inj_on:
+  assumes "inj_on f A" and "inj_on g B"
+  shows "inj_on (prod_fun f g) (A \<times> B)"
+proof (rule inj_onI)
+  fix x :: "'a \<times> 'c" and y :: "'a \<times> 'c"
+  assume "x \<in> A \<times> B" hence "fst x \<in> A" and "snd x \<in> B" by auto
+  assume "y \<in> A \<times> B" hence "fst y \<in> A" and "snd y \<in> B" by auto
+
+  assume "prod_fun f g x = prod_fun f g y"
+  hence "fst (prod_fun f g x) = fst (prod_fun f g y)" by (auto)
+  hence "f (fst x) = f (fst y)" by (cases x,cases y,auto)
+  with `inj_on f A` and `fst x \<in> A` and `fst y \<in> A`
+  have "fst x = fst y" by (auto dest:dest:inj_onD)
+  moreover
+  from `prod_fun f g x = prod_fun f g y`
+  have "snd (prod_fun f g x) = snd (prod_fun f g y)" by (auto)
+  hence "g (snd x) = g (snd y)" by (cases x,cases y,auto)
+  with `inj_on g B` and `snd x \<in> B` and `snd y \<in> B`
+  have "snd x = snd y" by (auto dest:dest:inj_onD)
+  ultimately
+  show "x = y" by(rule prod_eqI)
+qed
+
+lemma prod_fun_surj:
+  assumes "surj f" and "surj g"
+  shows "surj (prod_fun f g)"
+unfolding surj_def
+proof
+  fix y :: "'b \<times> 'd"
+  from `surj f` obtain a where "fst y = f a" by (auto elim:surjE)
+  moreover
+  from `surj g` obtain b where "snd y = g b" by (auto elim:surjE)
+  ultimately
+  have "(fst y, snd y) = prod_fun f g (a,b)" by auto
+  thus "\<exists>x. y = prod_fun f g x" by auto
+qed
+
+lemma prod_fun_surj_on:
+  assumes "f ` A = A'" and "g ` B = B'"
+  shows "prod_fun f g ` (A \<times> B) = A' \<times> B'"
+unfolding image_def
+proof(rule set_ext,rule iffI)
+    fix x :: "'a \<times> 'c"
+    assume "x \<in> {y\<Colon>'a \<times> 'c. \<exists>x\<Colon>'b \<times> 'd\<in>A \<times> B. y = prod_fun f g x}"
+    then obtain y where "y \<in> A \<times> B" and "x = prod_fun f g y" by blast
+    from `image f A = A'` and `y \<in> A \<times> B` have "f (fst y) \<in> A'" by auto
+    moreover
+    from `image g B = B'` and `y \<in> A \<times> B` have "g (snd y) \<in> B'" by auto
+    ultimately
+    have "(f (fst y), g (snd y)) \<in> (A' \<times> B')" by auto
+    with `x = prod_fun f g y` show "x \<in> A' \<times> B'" by (cases y, auto)
+next
+    fix x :: "'a \<times> 'c"
+    assume "x \<in> A' \<times> B'" hence "fst x \<in> A'" and "snd x \<in> B'" by auto
+    from `image f A = A'` and `fst x \<in> A'`
+    have "fst x \<in> image f A" by auto then
+    obtain a where "a \<in> A" and "fst x = f a" by (rule imageE)
+    moreover
+    from `image g B = B'` and `snd x \<in> B'`
+    obtain b where "b \<in> B" and "snd x = g b" by auto
+    ultimately
+    have "(fst x, snd x) = prod_fun f g (a,b)" by auto
+    moreover
+    from `a \<in> A` and  `b \<in> B` have "(a , b) \<in> A \<times> B" by auto
+    ultimately
+    have "\<exists>y \<in> A \<times> B. x = prod_fun f g y" by auto
+    thus "x \<in> {x. \<exists>y \<in> A \<times> B. x = prod_fun f g y}" by auto
+qed
+
+subsubsection {* Injectivity and subset *}
+
+text {* Injectivity of a function also holds on a subset of the domain. *}
+
+lemma inj_on_subset:
+  "\<lbrakk> inj_on f A ; B \<subseteq> A \<rbrakk> \<Longrightarrow> inj_on f B"
+by (auto intro!: inj_onI dest:inj_onD dest:subsetD)
 
 subsection {* Definition of the @{term "canceling"} relation *}
 
@@ -59,7 +141,7 @@ types 'a "word_g_i" = "'a g_i list" (* A word in the generators or their inverse
 
 text {*
 These type aliases encode the notion of a ``generator or its inverse''
-(@{typ "'a g_i"}) and the notion of a ``word in generators and their inverse''
+(@{typ "'a g_i"}) and the notion of a ``word in generators and their inverses''
 (@{typ "'a word_g_i"}), which form the building blocks of Free Groups.
 *}
 (* Too bad I cannot use antiquotations _before_ the definition, it would make
@@ -101,7 +183,6 @@ lemma cancel_at_nth1[simp]:
   "\<lbrakk> n < i; 1+i < length l  \<rbrakk> \<Longrightarrow> (cancel_at i l) ! n = l ! n"
 by(auto simp add: cancel_at_def nth_append)
 
-
 lemma cancel_at_nth2[simp]:
   assumes "n \<ge> i" and "n < length l - 2"
   shows "(cancel_at i l) ! n = l ! (n + 2)"
@@ -119,9 +200,9 @@ Then we can define the relation @{term "cancels_to_1_at i a b"} which specifies
 that @{term b} can be obtained by @{term a} by canceling the @{term i}th and
 @{text "(i+1)"}st position.
 
-Base on that, we existentially quantify over the position @{text i} to obtain
-the relation @{text "cancels_to_1"}, of wich @{text "cancels_to"} is the
-transitive hull.
+Based on that, we existentially quantify over the position @{text i} to obtain
+the relation @{text "cancels_to_1"}, of which @{text "cancels_to"} is the
+reflexive and transitive closure.
 
 A word is @{text "canceled"} if it can not be canceled any futher.
 *}
@@ -137,7 +218,8 @@ where "cancels_to_1 l1 l2 = (\<exists>i. cancels_to_1_at i l1 l2)"
 definition cancels_to  :: "'a word_g_i \<Rightarrow> 'a word_g_i \<Rightarrow> bool"
 where "cancels_to = cancels_to_1^**"
 
-lemma cancels_to_trans [trans]: "\<lbrakk> cancels_to a b; cancels_to b c \<rbrakk> \<Longrightarrow> cancels_to a c"
+lemma cancels_to_trans [trans]:
+  "\<lbrakk> cancels_to a b; cancels_to b c \<rbrakk> \<Longrightarrow> cancels_to a c"
 by (auto simp add:cancels_to_def)
 
 definition canceled :: "'a word_g_i \<Rightarrow> bool"
@@ -147,17 +229,9 @@ subsubsection {* Existence of the normal form *}
 
 text {*
 One of two steps to show that we have a normal form is the following lemma,
-quaranteeing that by canceling, we always end up at a fully canceled word.
+guaranteeing that by canceling, we always end up at a fully canceled word.
 *}
 
-(*
-I turned this proof into the next, structured proof. But is this really an improvement?
-lemma canceling_terminates: "wfP (cancels_to_1^--1)"
-apply(simp add:wfP_def)
-apply (rule_tac r = "measure size" in wf_subset)
-apply(auto simp add: cancels_to_1_def cancel_at_def cancels_to_1_at_def)
-done
-*)
 lemma canceling_terminates: "wfP (cancels_to_1^--1)"
 proof-
   have "wf (measure length)" by auto
@@ -355,10 +429,10 @@ text {*
 And finally, we show that there exists a unique normal form for each word.
 *}
 
+(*
 lemma inv_rtrcl: "R^**^--1 = R^--1^**" (* Did I overlook this in the standard libs? *)
 by (auto simp add:expand_fun_eq intro: dest:rtranclp_converseD intro:rtranclp_converseI)
-
-
+*)
 lemma norm_form_uniq:
   assumes "cancels_to a b"
       and "cancels_to a c"
@@ -433,7 +507,7 @@ next
 qed
 
 text {*
-The empty list is cancelled.
+The empty list is canceled, and a word is trivially cancled from itself.
 *}
 
 lemma empty_canceled[simp]: "canceled []"
@@ -508,7 +582,7 @@ proof-
   thus ?thesis unfolding normalize_def by (auto elim:norm_form_uniq)
 qed
 
-text {* Words, related by cancelation, have the same normal form *}
+text {* Words, related by cancelation, have the same normal form. *}
 
 lemma normalize_canceled[simp]:
   assumes "cancels_to l l'"
@@ -521,7 +595,7 @@ next
   show "cancels_to l (normalize l')" by (rule cancels_to_trans)
 qed
 
-text {* Normalization is idempotent *}
+text {* Normalization is idempotent. *}
 
 lemma normalize_idemp[simp]:
   assumes "canceled l"
@@ -549,7 +623,7 @@ next
   show "cancels_to (l1 @ l2) (normalize (l1' @ l2'))".
 qed
 
-subsection {* Normalization does preserves elements *}
+subsection {* Normalization preserves elements *}
 
 text {*
 Somewhat obvious, but still required to formalize Free Groups, is the fact that
@@ -614,9 +688,10 @@ by auto
 subsection {* Normalization and renaming generators *}
 
 text {*
-Renaming the generators, i.e. mapping them through an ijective function, commutes
+Renaming the generators, i.e. mapping them through an injective function, commutes
 with normalization. Similarly, replacing generators by their inverses and
-vica-versa commutes with normalization.
+vica-versa commutes with normalization. Both operations are similar enough to be
+handled at once here.
 *}
 
 lemma rename_gens_cancel_at: "cancel_at i (map f l) = map f (cancel_at i l)"
@@ -699,9 +774,11 @@ proof
 
   assume "DomainP cancels_to_1 (map (prod_fun f g) l)"
   then obtain l' where "cancels_to_1 (map (prod_fun f g) l) l'" by auto
-  then obtain i where "Suc i < length l" and "canceling (map (prod_fun f g) l ! i) (map (prod_fun f g) l ! Suc i)"
+  then obtain i where "Suc i < length l"
+    and "canceling (map (prod_fun f g) l ! i) (map (prod_fun f g) l ! Suc i)"
     by(auto simp add:cancels_to_1_def cancels_to_1_at_def)
-  hence "f (fst (l ! i)) \<noteq> f (fst (l ! Suc i))" and "g (snd (l ! i)) = g (snd (l ! Suc i))"
+  hence "f (fst (l ! i)) \<noteq> f (fst (l ! Suc i))"
+    and "g (snd (l ! i)) = g (snd (l ! Suc i))"
     by(auto simp add:canceling_def)
   from `f (fst (l ! i)) \<noteq> f (fst (l ! Suc i))`
   have "fst (l ! i) \<noteq> fst (l ! Suc i)" by -(erule different_images)
