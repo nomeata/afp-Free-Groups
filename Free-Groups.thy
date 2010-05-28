@@ -337,7 +337,8 @@ proof-
     assume "x \<in> image (map (prod_fun id f)) (carrier (free_group gens1))"
     then obtain y :: "(bool \<times> 'b) list" where "x = map (prod_fun id f) y"
                     and "y \<in> carrier (free_group gens1)"
-           proof
+           sorry
+(*
            fix xa
            assume "\<And>xa. \<lbrakk>x = map (prod_fun id f) xa; xa \<in> carrier (free_group gens1)\<rbrakk>
               \<Longrightarrow> thesis"
@@ -354,12 +355,11 @@ proof-
            assume "x = map (prod_fun id f) xa" and "xa \<in> carrier (free_group gens1)"
            ultimately show thesis by auto
            qed
+*)
 (*
            apply(rule_tac b=x and f="map (prod_fun id f)"
                                and A="carrier (free_group gens1)"
                                in imageE)
-           apply auto
-           sorry (* Why does this not work?)
 *)
     from `y \<in> carrier (free_group gens1)`
     have "canceled y" and "occuring_generators y \<subseteq> gens1" by (auto simp add:free_group_def)

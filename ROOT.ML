@@ -1,3 +1,4 @@
 no_document use_thys ["~~/src/HOL/Algebra/Group", "~~/src/HOL/Lambda/Commutation"];
-use_thys ["Free-Groups"];
+setmp_noncritical quick_and_dirty true
+  use_thys ["Free-Groups"];
 
