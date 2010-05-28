@@ -328,13 +328,11 @@ proof-
 qed
 
 lemma
-  fixes a :: "'a \<Rightarrow> 'a"
   assumes "bij_betw f gens1 gens2"
   shows "lift_generator_function f \<in> free_group gens1 \<cong> free_group gens2"
 unfolding lift_generator_function_def
-proof-
+proof(rule group_isoI)
   def h \<equiv> "map (prod_fun (id:: bool \<Rightarrow> bool) f)"
-
 
   from `bij_betw f gens1 gens2` have "inj_on f gens1" by (auto simp:bij_betw_def)
   hence "inj_on (prod_fun id f) (UNIV \<times> gens1)" by(auto simp add:prod_fun_inj_on)
@@ -344,17 +342,16 @@ proof-
   ultimately
   have "inj_on (prod_fun id f) (\<Union>set ` carrier (free_group gens1))"
     by (auto dest:inj_on_subset)
-  hence "inj_on h (carrier (free_group gens1))"
+  thus "inj_on h (carrier (free_group gens1))"
     unfolding h_def by(rule inj_on_mapI)
-  moreover
-
-  have "h ` carrier (free_group gens1) = carrier (free_group gens2)"
-  unfolding h_def
+next
+  from `bij_betw f gens1 gens2` have "inj_on f gens1" by (auto simp:bij_betw_def)
+  show "map (prod_fun id f) ` carrier (free_group gens1) = carrier (free_group gens2)"
   proof(rule set_ext,rule iffI)
     from `bij_betw f gens1 gens2` have "f ` gens1 = gens2" by (auto simp:bij_betw_def)
-    fix x :: "(bool \<times> 'c) list"
+    fix x :: "(bool \<times> 'b) list"
     assume "x \<in> image (map (prod_fun id f)) (carrier (free_group gens1))"
-    then obtain y :: "(bool \<times> 'b) list" where "x = map (prod_fun id f) y"
+    then obtain y :: "(bool \<times> 'a) list" where "x = map (prod_fun id f) y"
                     and "y \<in> carrier (free_group gens1)"
            sorry
 (*
@@ -400,9 +397,8 @@ proof-
     finally
     have "occuring_generators x \<subseteq> gens2" .
     moreover
-
     from `inj_on f gens1` and `occuring_generators y \<subseteq> gens1`
-    have "inj_on f (occuring_generators y)" by (rule subset_inj_on)
+    have "inj_on f (occuring_generators y)" by -(rule subset_inj_on)
     with `canceled y` have "canceled (map (prod_fun id f) y)"
       by -(rule rename_gens_canceled)
     with `x = map (prod_fun id f) y` have "canceled x" by simp
@@ -422,7 +418,7 @@ proof-
       by auto
     also have "\<dots> = map id x"
     proof(rule map_ext, rule impI)
-      fix xa :: "bool \<times> 'c"
+      fix xa :: "bool \<times> 'b"
       assume "xa \<in> set x"
       from `occuring_generators x \<subseteq> gens2`
       have "set (map snd x) \<subseteq> gens2"
@@ -476,15 +472,39 @@ proof-
     ultimately
     show "x \<in> map (prod_fun id f) ` carrier (free_group gens1)" by auto
   qed
-  ultimately
-  have "bij_betw h (carrier (free_group gens1)) (carrier (free_group gens2))"
-  unfolding bij_betw_def by(rule conjI)
-  moreover
-  have "h \<in> hom (free_group gens1) (free_group gens2)"  sorry
-  ultimately
-  show "h \<in> free_group gens1 \<cong> free_group gens2" 
-  unfolding iso_def
-  by auto
+next
+  from `bij_betw f gens1 gens2` have "inj_on f gens1" by (auto simp:bij_betw_def)
+  {
+  fix x
+  assume "x \<in> carrier (free_group gens1)"
+  fix y
+  assume "y \<in> carrier (free_group gens1)"
+
+  from `x \<in> carrier (free_group gens1)` and `y \<in> carrier (free_group gens1)`
+  have "occuring_generators x \<subseteq> gens1" and "occuring_generators y \<subseteq> gens1"
+    by (auto simp add:free_group_def)
+  hence "occuring_generators (x@y) \<subseteq> gens1"
+    by(auto simp add:occuring_generators_def)
+  with `inj_on f gens1` have "inj_on f (occuring_generators (x@y))"
+    by (rule inj_on_subset)
+
+  have "map (prod_fun id f) (x \<otimes>\<^bsub>free_group gens1\<^esub> y)
+       = map (prod_fun id f) (normalize (x@y))" by (simp add:free_group_def)
+  also from `inj_on f (occuring_generators (x@y))`
+       have "\<dots> = normalize (map (prod_fun id f) (x@y))"
+       by(auto simp add:rename_gens_normalize[THEN sym])
+  also have "\<dots> = normalize (map (prod_fun id f) x @ map (prod_fun id f) y)"
+       by (auto)
+  also have "\<dots> = map (prod_fun id f) x \<otimes>\<^bsub>free_group gens2\<^esub> map (prod_fun id f) y"
+       by (simp add:free_group_def)
+  finally have "map (prod_fun id f) (x \<otimes>\<^bsub>free_group gens1\<^esub> y) =
+                map (prod_fun id f) x \<otimes>\<^bsub>free_group gens2\<^esub> map (prod_fun id f) y".
+  }
+  thus "\<forall>x\<in>carrier (free_group gens1).
+       \<forall>y\<in>carrier (free_group gens1).
+          map (prod_fun id f) (x \<otimes>\<^bsub>free_group gens1\<^esub> y) =
+          map (prod_fun id f) x \<otimes>\<^bsub>free_group gens2\<^esub> map (prod_fun id f) y"
+   by auto
 qed
-*)
+
 end
