@@ -15,7 +15,7 @@ a single generator, and show that it is self-inverse.
 *}
 
 definition inv1 :: "'a g_i \<Rightarrow> 'a g_i"
- where "inv1 a = (\<not> fst a, snd a)"
+ where "inv1 = apfst Not"
 
 lemma inv1_inv1: "inv1 \<circ> inv1 = id"
   by (simp add: expand_fun_eq comp_def inv1_def)
@@ -23,10 +23,7 @@ lemma inv1_inv1: "inv1 \<circ> inv1 = id"
 lemmas inv1_inv1_simp [simp] = inv1_inv1[unfolded id_def]
 
 lemma snd_inv1: "snd \<circ> inv1 = snd"
-proof 
-  fix x
-  show "(snd \<circ> inv1) x = snd x" by (cases x, auto simp add:inv1_def)
-qed
+  by(simp add: expand_fun_eq comp_def inv1_def)
 
 text {*
 The inverse of a word is obtained by reversing the order of the generator and
