@@ -308,6 +308,25 @@ lemma inj_on_subset:
   "\<lbrakk> inj_on f A ; B \<subseteq> A \<rbrakk> \<Longrightarrow> inj_on f B"
 by (auto intro!: inj_onI dest:inj_onD dest:subsetD)
 
+text {* Nicer way of proving that something is a group isomorphism *}
+
+lemma group_isoI:
+  assumes inj: "inj_on h (carrier g1)"
+      and surj: "h ` (carrier g1) = carrier g2"
+      and hom: "\<forall>x\<in>carrier g1. \<forall>y\<in>carrier g1. h (x \<otimes>\<^bsub>g1\<^esub> y) = h x \<otimes>\<^bsub>g2\<^esub> h y"
+  shows "h \<in> g1 \<cong> g2"
+proof-
+  from inj and surj
+  have bij: "bij_betw h (carrier g1) (carrier g2)"
+    unfolding bij_betw_def by (rule conjI)
+  hence "h \<in> carrier g1 \<rightarrow> carrier g2"
+    by (rule bij_betw_imp_funcset)
+  with hom have "h \<in> hom g1 g2"
+    unfolding hom_def by auto
+  with bij show "h \<in> g1 \<cong> g2"
+    unfolding iso_def by auto
+qed
+
 lemma
   fixes a :: "'a \<Rightarrow> 'a"
   assumes "bij_betw f gens1 gens2"
