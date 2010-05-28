@@ -73,35 +73,28 @@ proof-
   thus "normalize (inv_fg l @ l) = []" by (simp add: inv_idemp)
 qed
 
-lemma inv_fg_closure1:
+lemma canceled_rev:
   assumes "canceled l"
-  shows "canceled (inv_fg l)"
+  shows "canceled (rev l)"
 proof(rule ccontr)
-  assume "\<not>canceled (inv_fg l)"
-  hence "DomainP cancels_to_1 (inv_fg l)" by (simp add: canceled_def)
-  then obtain l' where "cancels_to_1 (inv_fg l) l'" by auto
-  then obtain i where "cancels_to_1_at i (inv_fg l) l'" by (auto simp add:cancels_to_1_def)
-  hence "Suc i < length (inv_fg l)"
-    and "canceling (inv_fg l ! i) (inv_fg l ! Suc i)"
+  assume "\<not>canceled (rev l)"
+  hence "DomainP cancels_to_1 (rev l)" by (simp add: canceled_def)
+  then obtain l' where "cancels_to_1 (rev l) l'" by auto
+  then obtain i where "cancels_to_1_at i (rev l) l'" by (auto simp add:cancels_to_1_def)
+  hence "Suc i < length (rev l)"
+    and "canceling (rev l ! i) (rev l ! Suc i)"
     by (auto simp add:cancels_to_1_at_def)
   let ?x = "length l - i - 2"
-  from `Suc i < length (inv_fg l)`
-  have "Suc i < length l" by (simp add: inv_fg_def)
-  hence "Suc ?x < length l" by auto
-
+  from `Suc i < length (rev l)`
+  have "Suc ?x < length l" by auto
   moreover
-  from `Suc i < length l`
+  from `Suc i < length (rev l)`
   have "i < length l" and "length l - Suc i = Suc(length l - Suc (Suc i))" by auto
-  hence "inv_fg l ! i = inv1 (l ! Suc ?x)"
-    by (auto simp add:inv_fg_def rev_nth map_nth)
-  from `Suc i < length l`
-  have "inv_fg l ! Suc i = inv1 (l ! ?x)"
-    by (auto simp add:inv_fg_def rev_nth map_nth)
-  from `canceling (inv_fg l ! i) (inv_fg l ! Suc i)`
-   and `inv_fg l ! i = inv1 (l ! Suc ?x)`
-   and `inv_fg l ! Suc i = inv1 (l ! ?x)`
-  have "canceling (inv1 (l ! Suc ?x)) (inv1 (l ! ?x))" by auto
-  hence "canceling (inv1 (l ! ?x)) (inv1 (l ! Suc ?x))" by (rule cancel_sym)
+  hence "rev l ! i = l ! Suc ?x" and "rev l ! Suc i = l ! ?x"
+    by (auto simp add: rev_nth map_nth)
+  with `canceling (rev l ! i) (rev l ! Suc i)`
+  have "canceling (l ! Suc ?x) (l ! ?x)" by auto
+  hence "canceling (l ! ?x) (l ! Suc ?x)" by (rule cancel_sym)
   hence "canceling (l ! ?x) (l ! Suc ?x)" by simp
   ultimately
   have "cancels_to_1_at ?x l (cancel_at ?x l)" 
@@ -113,6 +106,19 @@ proof(rule ccontr)
   with `canceled l` show False by contradiction
 qed
 
+lemma inv_fg_closure1:
+  assumes "canceled l"
+  shows "canceled (inv_fg l)"
+unfolding inv_fg_def and inv1_def and apfst_def
+proof-
+  have "inj Not" by (auto intro:injI)
+  moreover
+  have "inj_on id (occuring_generators l)" by auto
+  ultimately
+  have "canceled (map (prod_fun Not id) l)" 
+    using `canceled l` by -(rule rename_gens_canceled)
+  thus "canceled (rev (map (prod_fun Not id) l))" by (rule canceled_rev)
+qed
 
 lemma inv_fg_closure2:
   "occuring_generators (inv_fg l) = occuring_generators l"
