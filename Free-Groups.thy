@@ -270,17 +270,6 @@ proof
   thus "\<exists>x. y = prod_fun f g x" by auto
 qed
 
-(* Another two rules fitting well in Product_Type.thy, where ther already is
-   snd_apnsnd et. al.  *)
-lemma fst_prod_fun[simp]: "fst (prod_fun f g x) = f (fst x)"
-  by (cases x, auto)
-lemma snd_prod_fun[simp]: "snd (prod_fun f g x) = g (snd x)"
-  by (cases x, auto)
-(* These are the variants actually needed below *)
-lemma fst_prod_fun'[simp]: "fst \<circ> prod_fun f g = f \<circ> fst"
-  by (rule,auto)
-lemma snd_prod_fun'[simp]: "snd \<circ> prod_fun f g = g \<circ> snd"
-  by (rule,auto)
 
 
 lemma prod_fun_surj_on:

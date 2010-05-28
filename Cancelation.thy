@@ -37,6 +37,21 @@ lemma confluent_unique_normal_form:
   "\<lbrakk> confluent R; R^** a b; R^** a c; \<not> DomainP R b; \<not> DomainP R c  \<rbrakk> \<Longrightarrow> b = c"
 by(fastsimp dest!: confluentD[of R a b c] dest: tranclp_DomainP rtranclpD[where a=b] rtranclpD[where a=c])
 
+subsection {* Auxillary results about @{text prod_fun} *}
+
+text {* Two simple rules that would fit well in @{theory Product_Type}, where there
+   already is @{term snd_apnsnd} et. al. *}
+lemma fst_prod_fun[simp]: "fst (prod_fun f g x) = f (fst x)"
+  by (cases x, auto)
+lemma snd_prod_fun[simp]: "snd (prod_fun f g x) = g (snd x)"
+  by (cases x, auto)
+text {* Variants of the above as required in this theory.*}
+lemma fst_prod_fun'[simp]: "fst \<circ> prod_fun f g = f \<circ> fst"
+  by (rule,auto)
+lemma snd_prod_fun'[simp]: "snd \<circ> prod_fun f g = g \<circ> snd"
+  by (rule,auto)
+
+
 subsection {* Definition of the @{term "canceling"} relation *}
 
 types 'a "g_i" = "(bool \<times> 'a)" (* A generator or its inverse *)
@@ -534,7 +549,7 @@ next
   show "cancels_to (l1 @ l2) (normalize (l1' @ l2'))".
 qed
 
-subsection {* Normalization does not add preserves elements *}
+subsection {* Normalization does preserves elements *}
 
 text {*
 Somewhat obvious, but still required to formalize Free Groups, is the fact that
@@ -595,5 +610,134 @@ lemma occuring_generators_empty[simp]:
 "occuring_generators [] = {}"
 unfolding occuring_generators_def
 by auto
+
+subsection {* Normalization and renaming generators *}
+
+text {*
+Renaming the generators, i.e. mapping them through an ijective function, commutes
+with normalization. Similarly, replacing generators by their inverses and
+vica-versa commutes with normalization.
+*}
+
+lemma rename_gens_cancel_at: "cancel_at i (map f l) = map f (cancel_at i l)"
+unfolding "cancel_at_def" by (auto simp add:take_map drop_map)
+
+lemma rename_gens_cancels_to_1_at:
+  assumes "inj f"
+      and "cancels_to_1_at i l l'"
+    shows "cancels_to_1_at i (map (prod_fun f g) l) (map (prod_fun f g) l')"
+proof-
+  from `cancels_to_1_at i l l'`
+  have "0 \<le> i" and "Suc i < length l"
+    and "canceling (l ! i) (l ! Suc i)"
+    and "l' = cancel_at i l"
+  unfolding "cancels_to_1_at_def" by auto
+  
+  from `l' = cancel_at i l`
+  have "map (prod_fun f g) l' = cancel_at i (map (prod_fun f g) l)"
+    by (simp add: rename_gens_cancel_at[THEN sym])
+  moreover
+  {
+    from `canceling (l ! i) (l ! Suc i)`
+    have "fst (l ! i) \<noteq> fst (l ! Suc i)" and "snd (l ! i) = snd (l ! Suc i)"
+      unfolding canceling_def by auto
+
+    from `fst (l ! i) \<noteq> fst (l ! Suc i)` and `inj f`
+    have "f (fst (l ! i)) \<noteq> f (fst (l ! Suc i))" by(auto dest!:inj_on_contraD)
+    hence "fst (map (prod_fun f g) l ! i) \<noteq> fst (map (prod_fun f g) l ! Suc i)"
+      using `Suc i < length l` by auto
+    moreover
+    from `snd (l ! i) = snd (l ! Suc i)`
+    have "snd (map (prod_fun f g) l ! i) = snd (map (prod_fun f g) l ! Suc i)" 
+      using `Suc i < length l` by auto
+    ultimately
+    have "canceling (map (prod_fun f g) l ! i) (map (prod_fun f g) l ! ((1\<Colon>nat) + i))"
+      unfolding canceling_def by auto
+  }
+  ultimately
+  show ?thesis
+  unfolding "cancels_to_1_at_def" using `Suc i < length l` by auto
+qed
+
+lemma rename_gens_cancels_to_1:
+  assumes "inj f"
+      and "cancels_to_1 l l'"
+    shows "cancels_to_1 (map (prod_fun f g) l) (map (prod_fun f g) l')"
+proof-
+  from `cancels_to_1 l l'`
+  obtain i where "cancels_to_1_at i l l'" unfolding cancels_to_1_def by auto
+  with `inj f`
+  have "cancels_to_1_at i (map (prod_fun f g) l) (map (prod_fun f g) l')"
+    by (rule rename_gens_cancels_to_1_at)
+  thus ?thesis unfolding cancels_to_1_def by auto
+qed
+
+lemma rename_gens_cancels_to:
+  assumes "inj f"
+      and "cancels_to l l'"
+    shows "cancels_to (map (prod_fun f g) l) (map (prod_fun f g) l')"
+using `cancels_to l l'`
+unfolding cancels_to_def
+proof(induct rule:rtranclp_induct)
+  case (step x z)
+    from `cancels_to_1 x z` and `inj f`
+    have "cancels_to_1 (map (prod_fun f g) x) (map (prod_fun f g) z)"
+      by -(rule rename_gens_cancels_to_1)
+    with `cancels_to_1^** (map (prod_fun f g) l) (map (prod_fun f g) x)`
+    show "cancels_to_1^** (map (prod_fun f g) l) (map (prod_fun f g) z)" by auto
+qed(auto)
+
+   
+lemma rename_gens_canceled:
+  assumes "inj_on g (occuring_generators l)"
+      and "canceled l"
+  shows "canceled (map (prod_fun f g) l)"
+unfolding canceled_def
+proof
+  (* This statement is needed explicitly later in this proof *)
+  have different_images: "\<And> f a b. f a \<noteq> f b \<Longrightarrow> a \<noteq> b" by auto
+
+  assume "DomainP cancels_to_1 (map (prod_fun f g) l)"
+  then obtain l' where "cancels_to_1 (map (prod_fun f g) l) l'" by auto
+  then obtain i where "Suc i < length l" and "canceling (map (prod_fun f g) l ! i) (map (prod_fun f g) l ! Suc i)"
+    by(auto simp add:cancels_to_1_def cancels_to_1_at_def)
+  hence "f (fst (l ! i)) \<noteq> f (fst (l ! Suc i))" and "g (snd (l ! i)) = g (snd (l ! Suc i))"
+    by(auto simp add:canceling_def)
+  from `f (fst (l ! i)) \<noteq> f (fst (l ! Suc i))`
+  have "fst (l ! i) \<noteq> fst (l ! Suc i)" by -(erule different_images)
+  moreover
+  from `Suc i < length l`
+  have "snd (l ! i) \<in> snd ` set l" and "snd (l ! Suc i) \<in> snd ` set l" by auto
+  with `g (snd (l ! i)) = g (snd (l ! Suc i))`
+  have "snd (l ! i) = snd (l ! Suc i)" 
+    using `inj_on g (occuring_generators l)`
+    unfolding occuring_generators_def
+    by (auto dest: inj_onD)
+  ultimately
+  have "canceling (l ! i) (l ! Suc i)" unfolding canceling_def by simp
+  with `Suc i < length l`
+  have "cancels_to_1_at i l (cancel_at i l)" 
+    unfolding cancels_to_1_at_def by auto
+  hence "cancels_to_1 l (cancel_at i l)"
+    unfolding cancels_to_1_def by auto
+  hence "\<not>canceled l"
+    unfolding canceled_def by auto
+  with `canceled l` show False by contradiction
+qed
+
+lemma rename_gens_normalize:
+  assumes "inj f"
+  and "inj_on g (occuring_generators l)"
+  shows "normalize (map (prod_fun f g) l) = map (prod_fun f g) (normalize l)"
+proof(rule normalize_discover)
+  from `inj_on g (occuring_generators l)`
+  have "inj_on g (occuring_generators (normalize l))"
+   by (rule subset_inj_on)(rule normalize_preserves_generators)
+  thus "canceled (map (prod_fun f g) (normalize l))" by(rule rename_gens_canceled,simp)
+next
+  from `inj f`
+  show "cancels_to (map (prod_fun f g) l) (map (prod_fun f g) (normalize l))"
+    by (rule rename_gens_cancels_to, simp)
+qed
 
 end
