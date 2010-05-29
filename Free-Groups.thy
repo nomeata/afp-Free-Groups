@@ -140,7 +140,7 @@ Finally, we can define the Free Group over a set of generators, and show that it
 is indeed a group.
 *}
 
-definition free_group
+definition free_group :: "'a set => ((bool * 'a) list) monoid"
 where 
   "free_group gens \<equiv> (|
      carrier = {l :: 'a word_g_i. canceled l \<and> occuring_generators l \<subseteq> gens },
@@ -281,31 +281,7 @@ next
     fix x :: "(bool \<times> 'b) list"
     assume "x \<in> image (map (prod_fun id f)) (carrier (free_group gens1))"
     then obtain y :: "(bool \<times> 'a) list" where "x = map (prod_fun id f) y"
-                    and "y \<in> carrier (free_group gens1)"
-           sorry
-(*
-           fix xa
-           assume "\<And>xa. \<lbrakk>x = map (prod_fun id f) xa; xa \<in> carrier (free_group gens1)\<rbrakk>
-              \<Longrightarrow> thesis"
-           hence "\<lbrakk>x = map (prod_fun id f) xa; xa \<in> carrier (free_group gens1)\<rbrakk>
-              \<Longrightarrow> thesis" 
-             apply -
-             apply(erule_tac x="xa" in meta_allE)
-             apply auto
-             apply(erule meta_impE)
-             apply auto
-             apply assumption (* Here, isabelle fails to apply the assumption *)
-             done
-           moreover
-           assume "x = map (prod_fun id f) xa" and "xa \<in> carrier (free_group gens1)"
-           ultimately show thesis by auto
-           qed
-*)
-(*
-           apply(rule_tac b=x and f="map (prod_fun id f)"
-                               and A="carrier (free_group gens1)"
-                               in imageE)
-*)
+                    and "y \<in> carrier (free_group gens1)" by auto
     from `y \<in> carrier (free_group gens1)`
     have "canceled y" and "occuring_generators y \<subseteq> gens1" by (auto simp add:free_group_def)
     hence "set (map snd y) \<subseteq> gens1" unfolding occuring_generators_def by simp
