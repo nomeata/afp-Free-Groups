@@ -2,7 +2,6 @@ header {* Cancelation of words of generators and their inverses *}
 
 theory Cancelation
 imports
-   "~~/src/HOL/Algebra/Group"
    "~~/src/HOL/Lambda/Commutation"
 begin
 

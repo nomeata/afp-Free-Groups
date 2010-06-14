@@ -1,7 +1,10 @@
 header {* The Free Group *}
 
 theory "Free-Groups"
-imports "Cancelation"
+imports
+   "~~/src/HOL/Algebra/Group"
+   "Cancelation"
+   "Generators"
 begin
 
 text {*
