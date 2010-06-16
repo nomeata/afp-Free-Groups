@@ -435,84 +435,76 @@ homomorphism from the Free Group. *}
 definition insert
   where "insert g = [(False, g)]"
 
-definition lift_gi
-  where "lift_gi G f gi = (if fst gi then m_inv G (f (snd gi)) else f (snd gi))"
+definition (in group) lift_gi
+  where "lift_gi f gi = (if fst gi then m_inv G (f (snd gi)) else f (snd gi))"
 
-definition lift
-  where "lift G f w = foldl (monoid.mult G) (monoid.one G) (map (lift_gi G f) w)"
+lemma (in group) lift_gi_closed:
+  assumes cl: "f ` gens \<subseteq> carrier G"
+      and "snd gi \<in> gens"
+  shows "lift_gi f gi \<in> carrier G"
+using assms by (auto simp add:lift_gi_def)
 
-lemma "lift (free_group UNIV) insert [(False,()),(False,())] = [(False,())]"
-  apply (auto simp add: lift_def lift_gi_def insert_def free_group_def)
-oops
+definition (in group) lift
+  where "lift f w = m_concat (map (lift_gi f) w)"
 
-lemma cancels_to_1_unfold: (* TODO: Move to Cancelation *)
-  assumes "cancels_to_1 x y"
-  obtains xs1 x1 x2 xs2
-  where "x = xs1 @ [x1] @ [x2] @ xs2"
-    and "y = xs1 @ xs2"
-    and "canceling x1 x2"
+lemma (in group) lift_closed[simp]:
+  assumes cl: "f ` gens \<subseteq> carrier G"
+      and "occuring_generators x \<subseteq> gens"
+  shows "lift f x \<in> carrier G"
 proof-
-  assume a: "(\<And>xs1 x1 x2 xs2. \<lbrakk>x = xs1 @ [x1] @ [x2] @ xs2; y = xs1 @ xs2; canceling x1 x2\<rbrakk> \<Longrightarrow> thesis)"
-  from `cancels_to_1 x y`
-  obtain i where "cancels_to_1_at i x y"
-    unfolding cancels_to_1_def by auto
-  hence "canceling (x ! i) (x ! Suc i)"
-    and "y = (take i x) @ (drop (Suc (Suc i)) x)"
-    and "x = (take i x) @ [x ! i] @ [x ! Suc i] @ (drop (Suc (Suc i)) x)"
-    unfolding cancel_at_def and cancels_to_1_at_def by (auto simp add: drop_Suc_conv_tl)
-  with a show thesis by blast
+  have "set (map (lift_gi f) x) \<subseteq> carrier G"
+    using cl and `occuring_generators x \<subseteq> gens`
+    by (auto simp add:lift_gi_closed occuring_generators_def)
+  thus "lift f x \<in> carrier G"
+    by (auto simp add:lift_def)
 qed
-
-
-lemma(in group) list_prod_closed[simp]:
-  assumes "set a \<subseteq> carrier G"
-  shows "foldl (op \<otimes>) \<one> a \<in> carrier G"
-using assms
-by (induct a rule:rev_induct, auto)
-
-lemma (in group) list_prod_append[simp]:
-  assumes "set a \<subseteq> carrier G"
-      and "set b \<subseteq> carrier G"
-  shows "foldl (op \<otimes>) \<one> (a @ b) = foldl (op \<otimes>) \<one> a \<otimes> foldl (op \<otimes>) \<one> b"
-using assms
-by(induct b rule:rev_induct)(auto simp add: m_assoc)
 
 lemma (in group) lift_append[simp]:
   assumes cl: "f ` gens \<subseteq> carrier G"
       and "occuring_generators x \<subseteq> gens"
       and "occuring_generators y \<subseteq> gens"
-  shows "lift G f (x @ y) = lift G f x \<otimes> lift G f y"
+  shows "lift f (x @ y) = lift f x \<otimes> lift f y"
 proof-
   from `occuring_generators x \<subseteq> gens`
   have "set (map snd x) \<subseteq> gens" unfolding occuring_generators_def by simp
   with `image f gens \<subseteq> carrier G`
-  have "set (map (lift_gi G f) x) \<subseteq> carrier G"
+  have "set (map (lift_gi f) x) \<subseteq> carrier G"
     by (induct x)(auto simp add:lift_gi_def)
   moreover
   from `occuring_generators y \<subseteq> gens`
   have "set (map snd y) \<subseteq> gens" unfolding occuring_generators_def by simp
   with `image f gens \<subseteq> carrier G`
-  have "set (map (lift_gi G f) y) \<subseteq> carrier G"
+  have "set (map (lift_gi f) y) \<subseteq> carrier G"
     by (induct y)(auto simp add:lift_gi_def)
   ultimately
-  show "lift G f (x @ y) = lift G f x \<otimes> lift G f y"
+  show "lift f (x @ y) = lift f x \<otimes> lift f y"
     by (auto simp add:lift_def m_assoc simp del:set_map foldl_append)
 qed
 
-lemma (in group)
+lemma (in group) lift_is_hom:
   assumes cl: "f ` gens \<subseteq> carrier G"
-  shows "lift G f \<in> hom (free_group gens) G"
+  shows "lift f \<in> hom (free_group gens) G"
 proof-
   { fix x
     assume x: "occuring_generators x \<subseteq> gens"
     fix y
     assume y: "occuring_generators y \<subseteq> gens"
 
-    have "cancels_to x y \<Longrightarrow> lift G f x = lift G f y"
+    assume "cancels_to x y"
+      have "lift f x = lift f y"
+    using `cancels_to x y` and x and y
     unfolding cancels_to_def
     proof(induct rule:rtranclp_induct)
       print_cases
       case (step y z)
+        from `cancels_to_1\<^sup>*\<^sup>* x y`
+        have "occuring_generators y \<subseteq> occuring_generators x"
+          by -(rule cancels_to_preserves_generators, simp add:cancels_to_def)
+        hence "occuring_generators y \<subseteq> gens"
+          using `occuring_generators x \<subseteq> gens` by simp
+        hence "lift f x = lift f y"
+          using step by auto
+        also
         from `cancels_to_1 y z`
         obtain ys1 y1 y2 ys2
           where "y = ys1 @ [y1] @ [y2] @ ys2"
@@ -520,37 +512,91 @@ proof-
           and "canceling y1 y2"
         by (rule cancels_to_1_unfold)
 
-        have "lift G f x = lift G f y" by fact
-        also
-        have "\<dots> = lift G f (ys1 @ [y1] @ [y2] @ ys2)"
+        have "lift f y  = lift f (ys1 @ [y1] @ [y2] @ ys2)"
           using `y = ys1 @ [y1] @ [y2] @ ys2` by simp
         also
-        have "\<dots> = lift G f ys1 \<otimes> lift G f ([y1]@[y2]@ys2)"
-          using x and y
-          apply (simp only: lift_append)
-        have "\<dots> = lift G f ys1 \<otimes> lift G f [y1] \<otimes> lift G f [y2] \<otimes> lift G f ys2"
-          by auto
+        from `occuring_generators y \<subseteq> gens`
+         and `y = ys1 @ [y1] @ [y2] @ ys2`
+        have "occuring_generators ys1 \<subseteq> gens"
+         and "occuring_generators ([y1]@[y2]@ys2) \<subseteq> gens"
+         and "occuring_generators ([y2]@ys2) \<subseteq> gens"
+         and "occuring_generators [y1] \<subseteq> gens"
+         and "occuring_generators [y2] \<subseteq> gens"
+         and "occuring_generators ys2 \<subseteq> gens"
+         unfolding occuring_generators_def by auto
+        with `y = ys1 @ [y1] @ [y2] @ ys2` and cl
+        have "lift f (ys1 @ [y1] @ [y2] @ ys2)
+             = lift f ys1 \<otimes> (lift f [y1] \<otimes> lift f [y2]) \<otimes> lift f ys2"
+          by (auto intro:lift_append simp del: append_Cons simp add:m_assoc)
         also
 
+        from `occuring_generators [y1] \<subseteq> gens`
+         and `occuring_generators [y2] \<subseteq> gens`
+         and cl
+         and `canceling y1 y2`
+        have "(lift f [y1] \<otimes> lift f [y2]) = \<one>"
+        by (auto simp add:lift_def occuring_generators_def lift_gi_def canceling_def)
+        hence "lift f ys1 \<otimes> (lift f [y1] \<otimes> lift f [y2]) \<otimes> lift f ys2
+               = lift f ys1 \<otimes> \<one> \<otimes> lift f ys2"
+          by simp
+        also
+        from `occuring_generators ys1 \<subseteq> gens`
+         and `occuring_generators ys2 \<subseteq> gens`
+         and cl
+        have "lift f ys1 \<otimes> \<one> \<otimes> lift f ys2 = lift f (ys1 @ ys2)"
+          by (auto intro:lift_append)
+        also
+        from `z = ys1 @ ys2`
+        have "lift f (ys1 @ ys2) = lift f z" by simp
+        finally show "lift f x = lift f z" .
+    qed auto
+  } hence lift_cancels_to: "\<And> x y. \<lbrakk>occuring_generators x \<subseteq> gens; occuring_generators y \<subseteq> gens;
+   cancels_to x y\<rbrakk> \<Longrightarrow> lift f x = lift f y" by blast
+
+ 
   {
     fix x
     assume "x \<in> carrier (free_group gens)"
     hence "set (map snd x) \<subseteq> gens"
       unfolding free_group_def and occuring_generators_def by simp
-    hence "lift G f x \<in> carrier G"
+    hence "lift f x \<in> carrier G"
      using cl by (induct x rule:rev_induct, auto simp add:lift_def lift_gi_def)
-  }
+  } 
   moreover
   { fix x
     assume "x \<in> carrier (free_group gens)"
     fix y
     assume "y \<in> carrier (free_group gens)"
-    have "lift G f (x \<otimes>\<^bsub>free_group gens\<^esub> y) = lift G f x \<otimes> lift G f y"
-      
-      apply (auto simp add:lift_def lift_gi_def)
+
+    from `x \<in> carrier (free_group gens)` and `y \<in> carrier (free_group gens)`
+    have "occuring_generators x \<subseteq> gens" and "occuring_generators y \<subseteq> gens"
+      by (auto simp add:free_group_def)
+    hence "occuring_generators (x@y) \<subseteq> gens" 
+      unfolding occuring_generators_def by auto
+    hence "occuring_generators (normalize (x@y)) \<subseteq> occuring_generators (x@y)" 
+      by (simp add: normalize_preserves_generators)
+    hence "occuring_generators (normalize (x@y)) \<subseteq> gens"
+      using `occuring_generators (x@y) \<subseteq> gens` by simp
+
+    have "lift f (x \<otimes>\<^bsub>free_group gens\<^esub> y) 
+         = lift f (normalize (x @ y))" by (simp add:free_group_def)
+    also
+    have "cancels_to (x @ y) (normalize (x @ y))" by simp
+    with `occuring_generators (x@y) \<subseteq> gens`
+        and `occuring_generators (normalize (x@y)) \<subseteq> gens`
+        and lift_cancels_to[THEN sym]
+    have "lift f (normalize (x @ y)) = lift f (x @ y)"
+      by(blast)
+    also
+    from `occuring_generators x \<subseteq> gens`
+     and `occuring_generators y \<subseteq> gens` and cl
+    have "lift f (x @ y) = lift f x \<otimes> lift f y"
+      by simp
+    finally
+    have "lift f (x \<otimes>\<^bsub>free_group gens\<^esub> y) = lift f x \<otimes> lift f y" .
   }
   ultimately
-  show "lift G f \<in> hom (free_group gens) G"
+  show "lift f \<in> hom (free_group gens) G"
     by auto
 qed
 
