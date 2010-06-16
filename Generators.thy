@@ -126,4 +126,36 @@ proof
   with gens show "x \<in> carrier G \<Longrightarrow> h x = h' x" by auto
 qed
 
+subsection {* Product of a list of group elements *}
+
+text {* Not strictly related to generators of groups, this is still a general
+group concept and not related to FreeGroups. *}
+
+abbreviation (in monoid) m_concat
+  where "m_concat \<equiv> foldl (op \<otimes>) \<one>"
+
+lemma (in monoid) m_concat_closed[simp]:
+ "set l \<subseteq> carrier G \<Longrightarrow> m_concat l \<in> carrier G"
+  by (induct l rule:rev_induct, auto)
+
+lemma (in monoid) m_concat_nil[simp]:
+  "m_concat [] = \<one>"
+  by auto
+
+lemma (in monoid) m_concat_one[simp]:
+  "x \<in> carrier G \<Longrightarrow> m_concat [x] = x"
+  by auto
+
+lemma (in monoid) m_concat_append[simp]:
+  assumes "set a \<subseteq> carrier G"
+      and "set b \<subseteq> carrier G"
+  shows "m_concat (a@b) = m_concat a \<otimes> m_concat b"
+using assms
+by(induct b rule:rev_induct)(auto simp add: m_assoc)
+
+lemma (in monoid) m_concat_cons[simp]:
+  "\<lbrakk> x \<in> carrier G ; set xs \<subseteq> carrier G \<rbrakk> \<Longrightarrow> m_concat (x#xs) = x \<otimes> m_concat xs"
+by(induct xs rule:rev_induct)(auto simp add: m_assoc)
+
+
 end
