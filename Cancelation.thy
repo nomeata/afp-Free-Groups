@@ -223,6 +223,31 @@ by (auto simp add:cancels_to_def)
 definition canceled :: "'a word_g_i \<Rightarrow> bool"
  where "canceled l = (\<not> DomainP cancels_to_1 l)"
 
+(* Alternative view on cancelation, sometimes easier to work with *)
+lemma cancels_to_1_unfold:
+  assumes "cancels_to_1 x y"
+  obtains xs1 x1 x2 xs2
+  where "x = xs1 @ [x1] @ [x2] @ xs2"
+    and "y = xs1 @ xs2"
+    and "canceling x1 x2"
+proof-
+  assume a: "(\<And>xs1 x1 x2 xs2. \<lbrakk>x = xs1 @ [x1] @ [x2] @ xs2; y = xs1 @ xs2; canceling x1 x2\<rbrakk> \<Longrightarrow> thesis)"
+  from `cancels_to_1 x y`
+  obtain i where "cancels_to_1_at i x y"
+    unfolding cancels_to_1_def by auto
+  hence "canceling (x ! i) (x ! Suc i)"
+    and "y = (take i x) @ (drop (Suc (Suc i)) x)"
+    and "x = (take i x) @ [x ! i] @ [x ! Suc i] @ (drop (Suc (Suc i)) x)"
+    unfolding cancel_at_def and cancels_to_1_at_def by (auto simp add: drop_Suc_conv_tl)
+  with a show thesis by blast
+qed
+
+(* And the reverse direction *)
+lemma cancel_to_1_fold:
+  "canceling x1 x2 \<Longrightarrow> cancels_to_1 (xs1 @ [x1] @ [x2] @ xs2) (xs1 @ xs2)"
+unfolding cancels_to_1_def and cancels_to_1_at_def and cancel_at_def
+by (rule_tac x="length xs1" in exI, auto simp add:nth_append)
+
 subsubsection {* Existence of the normal form *}
 
 text {*
@@ -399,10 +424,6 @@ next
             by(erule canceling_indep)
           hence "cancels_to_1 b d" and "cancels_to_1 c d" 
             by (auto simp add:cancels_to_1_def)
-          (* ersetzt
-              have "\<exists>d. cancels_to_1_at (j - 2) b d \<and> cancels_to_1_at i c d" by (auto elim: canceling_indep)
-              then obtain d where "cancels_to_1_at (j - 2) b d \<and> cancels_to_1_at i c d" by (erule exE)
-              hence "cancels_to_1 b d \<and> cancels_to_1 c d" by (auto simp add:cancels_to_1_def)*)
           thus "\<exists>d. cancels_to_1\<^sup>*\<^sup>* b d \<and> cancels_to_1\<^sup>*\<^sup>* c d" by (auto)
         next
           assume "\<not> i < j"
@@ -412,10 +433,6 @@ next
             by -(erule canceling_indep)
           hence "cancels_to_1 b d" and "cancels_to_1 c d" 
             by (auto simp add:cancels_to_1_def)
-              (* ersetzt
-              have "\<exists>d. cancels_to_1_at (i - 2) c d \<and> cancels_to_1_at j b d" by (auto elim: canceling_indep)
-              then obtain d where "cancels_to_1_at (i - 2) c d \<and> cancels_to_1_at j b d" by (erule exE)
-              hence "cancels_to_1 b d \<and> cancels_to_1 c d" by (auto simp add:cancels_to_1_def)*)
           thus "\<exists>d. cancels_to_1\<^sup>*\<^sup>* b d \<and> cancels_to_1\<^sup>*\<^sup>* c d" by (auto)
         qed
       qed
@@ -656,15 +673,7 @@ qed
 lemma cancels_to_preserves_generators:
   assumes "cancels_to l l'"
   shows "occuring_generators l' \<subseteq> occuring_generators l"
-using assms
-unfolding cancels_to_def
-proof induct
-  case (step y z)
-    from `cancels_to_1 y z`
-    have "occuring_generators z \<subseteq> occuring_generators y" by (rule cancels_to_1_preserves_generators)
-    with `occuring_generators y \<subseteq> occuring_generators l`
-    show "occuring_generators z \<subseteq> occuring_generators l" by simp
-qed(simp)
+using assms unfolding cancels_to_def by (induct, auto dest:cancels_to_1_preserves_generators)
 
 lemma normalize_preserves_generators:
   shows "occuring_generators (normalize l) \<subseteq> occuring_generators l"
@@ -675,13 +684,11 @@ qed
 
 lemma occuring_generators_concat:
   "occuring_generators (l@l') \<subseteq> occuring_generators l \<union> occuring_generators l'"
-unfolding occuring_generators_def
-by auto
+unfolding occuring_generators_def by auto
 
 lemma occuring_generators_empty[simp]:
 "occuring_generators [] = {}"
-unfolding occuring_generators_def
-by auto
+unfolding occuring_generators_def by auto
 
 subsection {* Normalization and renaming generators *}
 
@@ -695,54 +702,35 @@ handled at once here.
 lemma rename_gens_cancel_at: "cancel_at i (map f l) = map f (cancel_at i l)"
 unfolding "cancel_at_def" by (auto simp add:take_map drop_map)
 
-lemma rename_gens_cancels_to_1_at:
-  assumes "inj f"
-      and "cancels_to_1_at i l l'"
-    shows "cancels_to_1_at i (map (prod_fun f g) l) (map (prod_fun f g) l')"
-proof-
-  from `cancels_to_1_at i l l'`
-  have "0 \<le> i" and "Suc i < length l"
-    and "canceling (l ! i) (l ! Suc i)"
-    and "l' = cancel_at i l"
-  unfolding "cancels_to_1_at_def" by auto
-  
-  from `l' = cancel_at i l`
-  have "map (prod_fun f g) l' = cancel_at i (map (prod_fun f g) l)"
-    by (simp add: rename_gens_cancel_at[THEN sym])
-  moreover
-  {
-    from `canceling (l ! i) (l ! Suc i)`
-    have "fst (l ! i) \<noteq> fst (l ! Suc i)" and "snd (l ! i) = snd (l ! Suc i)"
-      unfolding canceling_def by auto
-
-    from `fst (l ! i) \<noteq> fst (l ! Suc i)` and `inj f`
-    have "f (fst (l ! i)) \<noteq> f (fst (l ! Suc i))" by(auto dest!:inj_on_contraD)
-    hence "fst (map (prod_fun f g) l ! i) \<noteq> fst (map (prod_fun f g) l ! Suc i)"
-      using `Suc i < length l` by auto
-    moreover
-    from `snd (l ! i) = snd (l ! Suc i)`
-    have "snd (map (prod_fun f g) l ! i) = snd (map (prod_fun f g) l ! Suc i)" 
-      using `Suc i < length l` by auto
-    ultimately
-    have "canceling (map (prod_fun f g) l ! i) (map (prod_fun f g) l ! ((1\<Colon>nat) + i))"
-      unfolding canceling_def by auto
-  }
-  ultimately
-  show ?thesis
-  unfolding "cancels_to_1_at_def" using `Suc i < length l` by auto
-qed
-
 lemma rename_gens_cancels_to_1:
   assumes "inj f"
       and "cancels_to_1 l l'"
     shows "cancels_to_1 (map (prod_fun f g) l) (map (prod_fun f g) l')"
 proof-
   from `cancels_to_1 l l'`
-  obtain i where "cancels_to_1_at i l l'" unfolding cancels_to_1_def by auto
-  with `inj f`
-  have "cancels_to_1_at i (map (prod_fun f g) l) (map (prod_fun f g) l')"
-    by (rule rename_gens_cancels_to_1_at)
-  thus ?thesis unfolding cancels_to_1_def by auto
+  obtain ls1 l1 l2 ls2
+    where "l = ls1 @ [l1] @ [l2] @ ls2"
+      and "l' = ls1 @ ls2"
+      and "canceling l1 l2"
+  by (rule cancels_to_1_unfold)
+
+  from `canceling l1 l2`
+  have "fst l1 \<noteq> fst l2" and "snd l1 = snd l2"
+    unfolding canceling_def by auto
+  from `fst l1 \<noteq> fst l2` and `inj f`
+  have "f (fst l1) \<noteq> f (fst l2)" by(auto dest!:inj_on_contraD)
+  hence "fst (prod_fun f g l1) \<noteq> fst (prod_fun f g l2)" by auto
+  moreover
+  from `snd l1 = snd l2`
+  have "snd (prod_fun f g l1) = snd (prod_fun f g l2)" by auto
+  ultimately
+  have "canceling (prod_fun f g (l1)) (prod_fun f g (l2))"
+    unfolding canceling_def by auto
+  hence "cancels_to_1 (map (prod_fun f g) ls1 @ [prod_fun f g l1] @ [prod_fun f g l2] @ map (prod_fun f g) ls2) (map (prod_fun f g) ls1 @ map (prod_fun f g) ls2)"
+   by(rule cancel_to_1_fold)
+  with `l = ls1 @ [l1] @ [l2] @ ls2` and `l' = ls1 @ ls2`
+  show "cancels_to_1 (map (prod_fun f g) l) (map (prod_fun f g) l')"
+   by simp
 qed
 
 lemma rename_gens_cancels_to:
