@@ -484,7 +484,6 @@ qed
 lemma (in group) lift_cancels_to:
   assumes "cancels_to x y"
       and "occuring_generators x \<subseteq> gens"
-      and "occuring_generators y \<subseteq> gens"
       and cl: "f ` gens \<subseteq> carrier G"
   shows "lift f x = lift f y"
 using assms
@@ -566,18 +565,13 @@ proof-
       by (auto simp add:free_group_def)
     hence "occuring_generators (x@y) \<subseteq> gens" 
       unfolding occuring_generators_def by auto
-    hence "occuring_generators (normalize (x@y)) \<subseteq> occuring_generators (x@y)" 
-      by (simp add: normalize_preserves_generators)
-    hence "occuring_generators (normalize (x@y)) \<subseteq> gens"
-      using `occuring_generators (x@y) \<subseteq> gens` by simp
 
     have "lift f (x \<otimes>\<^bsub>free_group gens\<^esub> y) 
          = lift f (normalize (x @ y))" by (simp add:free_group_def)
     also
     have "cancels_to (x @ y) (normalize (x @ y))" by simp
     with `occuring_generators (x@y) \<subseteq> gens`
-        and `occuring_generators (normalize (x@y)) \<subseteq> gens`
-        and lift_cancels_to[THEN sym] and cl
+     and lift_cancels_to[THEN sym] and cl
     have "lift f (normalize (x @ y)) = lift f (x @ y)"
       by(blast)
     also
