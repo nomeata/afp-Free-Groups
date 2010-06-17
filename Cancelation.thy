@@ -227,24 +227,24 @@ definition canceled :: "'a word_g_i \<Rightarrow> bool"
 lemma cancels_to_1_unfold:
   assumes "cancels_to_1 x y"
   obtains xs1 x1 x2 xs2
-  where "x = xs1 @ [x1] @ [x2] @ xs2"
+  where "x = xs1 @ x1 # x2 # xs2"
     and "y = xs1 @ xs2"
     and "canceling x1 x2"
 proof-
-  assume a: "(\<And>xs1 x1 x2 xs2. \<lbrakk>x = xs1 @ [x1] @ [x2] @ xs2; y = xs1 @ xs2; canceling x1 x2\<rbrakk> \<Longrightarrow> thesis)"
+  assume a: "(\<And>xs1 x1 x2 xs2. \<lbrakk>x = xs1 @ x1 # x2 # xs2; y = xs1 @ xs2; canceling x1 x2\<rbrakk> \<Longrightarrow> thesis)"
   from `cancels_to_1 x y`
   obtain i where "cancels_to_1_at i x y"
     unfolding cancels_to_1_def by auto
   hence "canceling (x ! i) (x ! Suc i)"
     and "y = (take i x) @ (drop (Suc (Suc i)) x)"
-    and "x = (take i x) @ [x ! i] @ [x ! Suc i] @ (drop (Suc (Suc i)) x)"
+    and "x = (take i x) @ x ! i # x ! Suc i # (drop (Suc (Suc i)) x)"
     unfolding cancel_at_def and cancels_to_1_at_def by (auto simp add: drop_Suc_conv_tl)
   with a show thesis by blast
 qed
 
 (* And the reverse direction *)
-lemma cancel_to_1_fold:
-  "canceling x1 x2 \<Longrightarrow> cancels_to_1 (xs1 @ [x1] @ [x2] @ xs2) (xs1 @ xs2)"
+lemma cancels_to_1_fold:
+  "canceling x1 x2 \<Longrightarrow> cancels_to_1 (xs1 @ x1 # x2 # xs2) (xs1 @ xs2)"
 unfolding cancels_to_1_def and cancels_to_1_at_def and cancel_at_def
 by (rule_tac x="length xs1" in exI, auto simp add:nth_append)
 
@@ -522,11 +522,34 @@ next
 qed
 
 text {*
-The empty list is canceled, and a word is trivially cancled from itself.
+The empty list is canceled, a one letter word is canceled and a word is
+trivially cancled from itself.
 *}
 
 lemma empty_canceled[simp]: "canceled []"
 by(auto simp:add canceled_def cancels_to_1_def cancels_to_1_at_def)
+
+lemma singleton_canceled[simp]: "canceled [a]"
+by(auto simp:add canceled_def cancels_to_1_def cancels_to_1_at_def)
+
+lemma cons_canceled:
+  assumes "canceled (a#x)"
+  shows   "canceled x"
+proof(rule ccontr)
+  assume "\<not> canceled x"
+  hence "DomainP cancels_to_1 x" by (simp add:canceled_def)
+  then obtain x' where "cancels_to_1 x x'" by auto
+  then obtain xs1 x1 x2 xs2
+    where x: "x = xs1 @ x1 # x2 # xs2"
+    and   "canceling x1 x2" by (rule cancels_to_1_unfold)
+  hence "cancels_to_1 ((a#xs1) @ x1 # x2 # xs2) ( (a#xs1) @ xs2)"
+    by (auto intro:cancels_to_1_fold simp del:append_Cons)
+  with x
+  have "cancels_to_1 (a#x) (a#xs1 @ xs2)"
+    by simp
+  hence "\<not> canceled (a#x)" by (auto simp add:canceled_def)
+  thus False using `canceled (a#x)` by contradiction
+qed
 
 lemma cancels_to_self[simp]: "cancels_to l l"
 by (simp add:cancels_to_def)
@@ -709,7 +732,7 @@ lemma rename_gens_cancels_to_1:
 proof-
   from `cancels_to_1 l l'`
   obtain ls1 l1 l2 ls2
-    where "l = ls1 @ [l1] @ [l2] @ ls2"
+    where "l = ls1 @ l1 # l2 # ls2"
       and "l' = ls1 @ ls2"
       and "canceling l1 l2"
   by (rule cancels_to_1_unfold)
@@ -726,9 +749,9 @@ proof-
   ultimately
   have "canceling (prod_fun f g (l1)) (prod_fun f g (l2))"
     unfolding canceling_def by auto
-  hence "cancels_to_1 (map (prod_fun f g) ls1 @ [prod_fun f g l1] @ [prod_fun f g l2] @ map (prod_fun f g) ls2) (map (prod_fun f g) ls1 @ map (prod_fun f g) ls2)"
-   by(rule cancel_to_1_fold)
-  with `l = ls1 @ [l1] @ [l2] @ ls2` and `l' = ls1 @ ls2`
+  hence "cancels_to_1 (map (prod_fun f g) ls1 @ prod_fun f g l1 # prod_fun f g l2 # map (prod_fun f g) ls2) (map (prod_fun f g) ls1 @ map (prod_fun f g) ls2)"
+   by(rule cancels_to_1_fold)
+  with `l = ls1 @ l1 # l2 # ls2` and `l' = ls1 @ ls2`
   show "cancels_to_1 (map (prod_fun f g) l) (map (prod_fun f g) l')"
    by simp
 qed

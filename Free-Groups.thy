@@ -227,6 +227,10 @@ next
   qed
 qed
 
+lemma inv_is_inv_fg[simp]:
+  "x \<in> carrier (free_group gens) \<Longrightarrow> m_inv (free_group gens) x = inv_fg x"
+by (rule group.inv_equality,auto simp add:free_group_is_group,auto simp add: free_group_def inv_fg_cancel inv_fg_cancel2 inv_fg_closure1 inv_fg_closure2)
+
 subsection {* Isomorphisms of Free Groups *}
 
 subsubsection {* The Free Group over the empty set *}
@@ -428,7 +432,7 @@ qed
 
 subsection {* The universal property *}
 
-text {* Free Groups are important due to the universal properties: Every map of
+text {* Free Groups are important due to their universal property: Every map of
 the set of generators to another group can be extended uniquely to an
 homomorphism from the Free Group. *}
 
@@ -469,13 +473,13 @@ proof-
   have "set (map snd x) \<subseteq> gens" unfolding occuring_generators_def by simp
   with `image f gens \<subseteq> carrier G`
   have "set (map (lift_gi f) x) \<subseteq> carrier G"
-    by (induct x)(auto simp add:lift_gi_def)
+    by (induct x)(auto simp add:lift_gi_closed)
   moreover
   from `occuring_generators y \<subseteq> gens`
   have "set (map snd y) \<subseteq> gens" unfolding occuring_generators_def by simp
   with `image f gens \<subseteq> carrier G`
   have "set (map (lift_gi f) y) \<subseteq> carrier G"
-    by (induct y)(auto simp add:lift_gi_def)
+    by (induct y)(auto simp add:lift_gi_closed)
   ultimately
   show "lift f (x @ y) = lift f x \<otimes> lift f y"
     by (auto simp add:lift_def m_assoc simp del:set_map foldl_append)
@@ -500,15 +504,15 @@ proof(induct rule:rtranclp_induct)
     also
     from `cancels_to_1 y z`
     obtain ys1 y1 y2 ys2
-      where "y = ys1 @ [y1] @ [y2] @ ys2"
+      where y: "y = ys1 @ y1 # y2 # ys2"
       and "z = ys1 @ ys2"
       and "canceling y1 y2"
     by (rule cancels_to_1_unfold)
     have "lift f y  = lift f (ys1 @ [y1] @ [y2] @ ys2)"
-      using `y = ys1 @ [y1] @ [y2] @ ys2` by simp
+      using y by simp
     also
     from `occuring_generators y \<subseteq> gens`
-     and `y = ys1 @ [y1] @ [y2] @ ys2`
+     and `y = ys1 @ y1 # y2 # ys2`
     have "occuring_generators ys1 \<subseteq> gens"
      and "occuring_generators ([y1]@[y2]@ys2) \<subseteq> gens"
      and "occuring_generators ([y2]@ys2) \<subseteq> gens"
@@ -516,7 +520,7 @@ proof(induct rule:rtranclp_induct)
      and "occuring_generators [y2] \<subseteq> gens"
      and "occuring_generators ys2 \<subseteq> gens"
     unfolding occuring_generators_def by auto
-    with `y = ys1 @ [y1] @ [y2] @ ys2` and cl
+    with y and cl
     have "lift f (ys1 @ [y1] @ [y2] @ ys2)
         = lift f ys1 \<otimes> (lift f [y1] \<otimes> lift f [y2]) \<otimes> lift f ys2"
       by (auto intro:lift_append simp del: append_Cons simp add:m_assoc)
@@ -552,7 +556,7 @@ proof-
     hence "set (map snd x) \<subseteq> gens"
       unfolding free_group_def and occuring_generators_def by simp
     hence "lift f x \<in> carrier G"
-     using cl by (induct x rule:rev_induct, auto simp add:lift_def lift_gi_def)
+     using cl by (induct x rule:rev_induct, auto simp add:lift_def lift_gi_closed)
   } 
   moreover
   { fix x
@@ -583,6 +587,92 @@ proof-
   ultimately
   show "lift f \<in> hom (free_group gens) G"
     by auto
+qed
+
+lemma gens_span_free_group:
+shows "group.gen_span (free_group gens) (insert ` gens) = carrier (free_group gens)"
+proof
+  interpret group "free_group gens" by(rule free_group_is_group)
+  show "group.gen_span (free_group gens) (insert ` gens) \<subseteq> carrier (free_group gens)"
+  by(rule gen_span_closed, auto simp add:insert_def free_group_def occuring_generators_def)
+
+  show "carrier (free_group gens)  \<subseteq> group.gen_span (free_group gens) (insert ` gens)"
+  proof
+    fix x
+    show "x \<in> carrier (free_group gens) \<Longrightarrow> x \<in> group.gen_span (free_group gens) (insert ` gens)"
+    proof(induct x)
+    case Nil
+      have "one (free_group gens) \<in> group.gen_span (free_group gens) (insert ` gens)"
+        by simp
+      thus "[] \<in> group.gen_span (free_group gens) (insert ` gens)"
+        by (simp add:free_group_def)
+    next
+    case (Cons a x)
+      from `a # x \<in> carrier (free_group gens)`
+      have "x \<in> carrier (free_group gens)"
+        by (auto intro:cons_canceled simp add:free_group_def occuring_generators_def)
+      hence "x \<in> group.gen_span (free_group gens) (insert ` gens)"
+        using Cons by simp
+      moreover
+
+      from `a # x \<in> carrier (free_group gens)`
+      have "snd a \<in> gens"
+        by (auto simp add:free_group_def occuring_generators_def)
+      hence isa: "insert (snd a) \<in> group.gen_span (free_group gens) (insert ` gens)"
+        by (auto simp add:insert_def intro:gen_gens)
+      have "[a] \<in> group.gen_span (free_group gens) (insert ` gens)"
+      proof(cases "fst a")
+        case False
+          hence "[a] = insert (snd a)" by (cases a, auto simp add:insert_def)
+           with isa show "[a] \<in> group.gen_span (free_group gens) (insert ` gens)" by simp
+       next
+        case True
+          from `snd a \<in> gens`
+          have "insert (snd a) \<in> carrier (free_group gens)" 
+            by (simp add:free_group_def insert_def  occuring_generators_def)
+          with True
+          have "[a] = m_inv (free_group gens) (insert (snd a))"
+            by (cases a, auto simp add:insert_def inv_fg_def inv1_def)
+          moreover
+          from isa
+          have "m_inv (free_group gens) (insert (snd a)) \<in> group.gen_span (free_group gens) (insert ` gens)"
+            by (auto intro:gen_inv)
+          ultimately
+          show "[a] \<in> group.gen_span (free_group gens) (insert ` gens)"
+            by simp
+      qed
+      ultimately 
+      have "mult (free_group gens) [a] x \<in> group.gen_span (free_group gens) (insert ` gens)"
+        by (auto intro:gen_mult)
+      with
+      `a # x \<in> carrier (free_group gens)`
+      show "a # x \<in> group.gen_span (free_group gens) (insert ` gens)" by (simp add:free_group_def)
+    qed
+  qed
+qed
+
+lemma (in group) lift_is_unique:
+  assumes "group G"
+  and cl: "f ` gens \<subseteq> carrier G"
+  and "h \<in> hom (free_group gens) G"
+  and "\<forall> g \<in> gens. h (insert g) = f g"
+  shows "\<forall>x \<in> carrier (free_group gens). h x = lift f x"
+unfolding gens_span_free_group[THEN sym]
+proof(rule hom_unique_on_span[of "free_group gens" G])
+  show "group (free_group gens)" by (rule free_group_is_group)
+next
+  show "group G" by fact
+next
+  show "insert ` gens \<subseteq> carrier (free_group gens)"
+    by(auto simp add:insert_def free_group_def occuring_generators_def)
+next
+  show "h \<in> hom (free_group gens) G" by fact
+next
+  show "lift f \<in> hom (free_group gens) G" using cl by (rule lift_is_hom)
+next
+  from `\<forall>g\<in> gens. h (insert g) = f g` and cl
+  show "\<forall>g\<in> insert ` gens. h g = lift f g"
+    by(auto simp add:insert_def lift_def lift_gi_def)
 qed
 
 end

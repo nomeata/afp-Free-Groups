@@ -76,7 +76,7 @@ subsection {* Generators and homomorphisms *}
 
 text {* Two homorphisms agreeing on some elements agree on the span of those elements.*}
 
-lemma hom_uniqe_on_span:
+lemma hom_unique_on_span:
   assumes "group G"
       and "group H"
       and "gens \<subseteq> carrier G"
@@ -106,11 +106,11 @@ subsection {* Sets of generators *}
 text {* There is no definition for @{text gens} is a generating set of
 @{text G}. This is easily expressed by @{text "\<guillemotleft>gens\<guillemotright> = carrier G"}. *}
 
-text {* The following is application of @{text hom_uniqe_on_span} on a generating
+text {* The following is application of @{text hom_unique_on_span} on a generating
   set of the whole group. *}
 
 
-lemma (in group) hom_uniqe_by_gens:
+lemma (in group) hom_unique_by_gens:
   assumes "group H"
       and gens: "\<guillemotleft>gens\<guillemotright> = carrier G"
       and "h \<in> hom G H"
@@ -122,7 +122,7 @@ proof
 
   from gens have "gens \<subseteq> carrier G" by (auto intro:gen_span.gen_gens)
   with assms and group_axioms have r: "\<forall>x \<in> group.gen_span G gens. h x = h' x"
-    by -(erule hom_uniqe_on_span, auto)
+    by -(erule hom_unique_on_span, auto)
   with gens show "x \<in> carrier G \<Longrightarrow> h x = h' x" by auto
 qed
 
