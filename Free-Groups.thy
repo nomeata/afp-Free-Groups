@@ -566,14 +566,12 @@ proof-
     hence "occuring_generators (x@y) \<subseteq> gens" 
       unfolding occuring_generators_def by auto
 
-    have "lift f (x \<otimes>\<^bsub>free_group gens\<^esub> y) 
-         = lift f (normalize (x @ y))" by (simp add:free_group_def)
-    also
     have "cancels_to (x @ y) (normalize (x @ y))" by simp
     with `occuring_generators (x@y) \<subseteq> gens`
      and lift_cancels_to[THEN sym] and cl
-    have "lift f (normalize (x @ y)) = lift f (x @ y)"
-      by(blast)
+    have "lift f (x \<otimes>\<^bsub>free_group gens\<^esub> y) = lift f (x @ y)"
+      unfolding free_group_def
+      by(simp,blast)
     also
     from `occuring_generators x \<subseteq> gens`
      and `occuring_generators y \<subseteq> gens` and cl
