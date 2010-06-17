@@ -138,14 +138,6 @@ lemma (in monoid) m_concat_closed[simp]:
  "set l \<subseteq> carrier G \<Longrightarrow> m_concat l \<in> carrier G"
   by (induct l rule:rev_induct, auto)
 
-lemma (in monoid) m_concat_nil[simp]:
-  "m_concat [] = \<one>"
-  by auto
-
-lemma (in monoid) m_concat_one[simp]:
-  "x \<in> carrier G \<Longrightarrow> m_concat [x] = x"
-  by auto
-
 lemma (in monoid) m_concat_append[simp]:
   assumes "set a \<subseteq> carrier G"
       and "set b \<subseteq> carrier G"
