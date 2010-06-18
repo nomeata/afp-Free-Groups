@@ -590,41 +590,41 @@ proof-
 qed
 
 lemma gens_span_free_group:
-shows "group.gen_span (free_group gens) (insert ` gens) = carrier (free_group gens)"
+shows "gen_span (free_group gens) (insert ` gens) = carrier (free_group gens)"
 proof
   interpret group "free_group gens" by(rule free_group_is_group)
-  show "group.gen_span (free_group gens) (insert ` gens) \<subseteq> carrier (free_group gens)"
+  show "gen_span (free_group gens) (insert ` gens) \<subseteq> carrier (free_group gens)"
   by(rule gen_span_closed, auto simp add:insert_def free_group_def occuring_generators_def)
 
-  show "carrier (free_group gens)  \<subseteq> group.gen_span (free_group gens) (insert ` gens)"
+  show "carrier (free_group gens)  \<subseteq> gen_span (free_group gens) (insert ` gens)"
   proof
     fix x
-    show "x \<in> carrier (free_group gens) \<Longrightarrow> x \<in> group.gen_span (free_group gens) (insert ` gens)"
+    show "x \<in> carrier (free_group gens) \<Longrightarrow> x \<in> gen_span (free_group gens) (insert ` gens)"
     proof(induct x)
     case Nil
-      have "one (free_group gens) \<in> group.gen_span (free_group gens) (insert ` gens)"
+      have "one (free_group gens) \<in> gen_span (free_group gens) (insert ` gens)"
         by simp
-      thus "[] \<in> group.gen_span (free_group gens) (insert ` gens)"
+      thus "[] \<in> gen_span (free_group gens) (insert ` gens)"
         by (simp add:free_group_def)
     next
     case (Cons a x)
       from `a # x \<in> carrier (free_group gens)`
       have "x \<in> carrier (free_group gens)"
         by (auto intro:cons_canceled simp add:free_group_def occuring_generators_def)
-      hence "x \<in> group.gen_span (free_group gens) (insert ` gens)"
+      hence "x \<in> gen_span (free_group gens) (insert ` gens)"
         using Cons by simp
       moreover
 
       from `a # x \<in> carrier (free_group gens)`
       have "snd a \<in> gens"
         by (auto simp add:free_group_def occuring_generators_def)
-      hence isa: "insert (snd a) \<in> group.gen_span (free_group gens) (insert ` gens)"
+      hence isa: "insert (snd a) \<in> gen_span (free_group gens) (insert ` gens)"
         by (auto simp add:insert_def intro:gen_gens)
-      have "[a] \<in> group.gen_span (free_group gens) (insert ` gens)"
+      have "[a] \<in> gen_span (free_group gens) (insert ` gens)"
       proof(cases "fst a")
         case False
           hence "[a] = insert (snd a)" by (cases a, auto simp add:insert_def)
-           with isa show "[a] \<in> group.gen_span (free_group gens) (insert ` gens)" by simp
+           with isa show "[a] \<in> gen_span (free_group gens) (insert ` gens)" by simp
        next
         case True
           from `snd a \<in> gens`
@@ -635,18 +635,18 @@ proof
             by (cases a, auto simp add:insert_def inv_fg_def inv1_def)
           moreover
           from isa
-          have "m_inv (free_group gens) (insert (snd a)) \<in> group.gen_span (free_group gens) (insert ` gens)"
+          have "m_inv (free_group gens) (insert (snd a)) \<in> gen_span (free_group gens) (insert ` gens)"
             by (auto intro:gen_inv)
           ultimately
-          show "[a] \<in> group.gen_span (free_group gens) (insert ` gens)"
+          show "[a] \<in> gen_span (free_group gens) (insert ` gens)"
             by simp
       qed
       ultimately 
-      have "mult (free_group gens) [a] x \<in> group.gen_span (free_group gens) (insert ` gens)"
+      have "mult (free_group gens) [a] x \<in> gen_span (free_group gens) (insert ` gens)"
         by (auto intro:gen_mult)
       with
       `a # x \<in> carrier (free_group gens)`
-      show "a # x \<in> group.gen_span (free_group gens) (insert ` gens)" by (simp add:free_group_def)
+      show "a # x \<in> gen_span (free_group gens) (insert ` gens)" by (simp add:free_group_def)
     qed
   qed
 qed
