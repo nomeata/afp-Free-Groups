@@ -198,6 +198,36 @@ lemma (in monoid) m_concat_cons[simp]:
   "\<lbrakk> x \<in> carrier G ; set xs \<subseteq> carrier G \<rbrakk> \<Longrightarrow> m_concat (x#xs) = x \<otimes> m_concat xs"
 by(induct xs rule:rev_induct)(auto simp add: m_assoc)
 
+subsection {* Isomorphisms *}
+
+text {* Nicer way of proving that something is a group homomorphism or isomorphism *}
+
+lemma group_homI[intro]:
+  assumes range: "h ` (carrier g1) \<subseteq> carrier g2"
+      and hom: "\<forall>x\<in>carrier g1. \<forall>y\<in>carrier g1. h (x \<otimes>\<^bsub>g1\<^esub> y) = h x \<otimes>\<^bsub>g2\<^esub> h y"
+  shows "h \<in> hom g1 g2"
+proof-
+  have "h \<in> carrier g1 \<rightarrow> carrier g2" using range  by auto
+  thus "h \<in> hom g1 g2" using hom unfolding hom_def by auto
+qed
+
+lemma group_isoI[intro]:
+  assumes inj: "inj_on h (carrier g1)"
+      and surj: "h ` (carrier g1) = carrier g2"
+      and hom: "\<forall>x\<in>carrier g1. \<forall>y\<in>carrier g1. h (x \<otimes>\<^bsub>g1\<^esub> y) = h x \<otimes>\<^bsub>g2\<^esub> h y"
+  shows "h \<in> g1 \<cong> g2"
+proof-
+  from inj and surj
+  have bij: "bij_betw h (carrier g1) (carrier g2)"
+    unfolding bij_betw_def by (rule conjI)
+  hence "h \<in> carrier g1 \<rightarrow> carrier g2"
+    by (rule bij_betw_imp_funcset)
+  with hom have "h \<in> hom g1 g2"
+    unfolding hom_def by auto
+  with bij show "h \<in> g1 \<cong> g2"
+    unfolding iso_def by auto
+qed
+
 
 end
 
