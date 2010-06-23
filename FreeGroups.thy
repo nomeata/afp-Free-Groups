@@ -151,6 +151,7 @@ where
      one = []
   \<rparr>"
 
+
 lemma occuring_gens_in_element:
   "x \<in> carrier (free_group gens) \<Longrightarrow> occuring_generators x \<subseteq> gens"
 by(auto simp add:free_group_def)
