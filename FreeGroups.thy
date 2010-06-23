@@ -397,41 +397,41 @@ proof-
 qed
 
 lemma gens_span_free_group:
-shows "\<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> = carrier \<F>\<^bsub>gens\<^esub>"
+shows "\<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> = carrier \<F>\<^bsub>gens\<^esub>"
 proof
   interpret group "\<F>\<^bsub>gens\<^esub>" by (rule free_group_is_group)
-  show "\<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> \<subseteq> carrier \<F>\<^bsub>gens\<^esub>"
+  show "\<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> \<subseteq> carrier \<F>\<^bsub>gens\<^esub>"
   by(rule gen_span_closed, auto simp add:insert_def free_group_def occuring_generators_def)
 
-  show "carrier \<F>\<^bsub>gens\<^esub>  \<subseteq> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+  show "carrier \<F>\<^bsub>gens\<^esub>  \<subseteq> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
   proof
     fix x
-    show "x \<in> carrier \<F>\<^bsub>gens\<^esub> \<Longrightarrow> x \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+    show "x \<in> carrier \<F>\<^bsub>gens\<^esub> \<Longrightarrow> x \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
     proof(induct x)
     case Nil
-      have "one \<F>\<^bsub>gens\<^esub> \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+      have "one \<F>\<^bsub>gens\<^esub> \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
         by simp
-      thus "[] \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+      thus "[] \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
         by (simp add:free_group_def)
     next
     case (Cons a x)
       from `a # x \<in> carrier \<F>\<^bsub>gens\<^esub>`
       have "x \<in> carrier \<F>\<^bsub>gens\<^esub>"
         by (auto intro:cons_canceled simp add:free_group_def occuring_generators_def)
-      hence "x \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+      hence "x \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
         using Cons by simp
       moreover
 
       from `a # x \<in> carrier \<F>\<^bsub>gens\<^esub>`
       have "snd a \<in> gens"
         by (auto simp add:free_group_def occuring_generators_def)
-      hence isa: "insert (snd a) \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+      hence isa: "insert (snd a) \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
         by (auto simp add:insert_def intro:gen_gens)
-      have "[a] \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+      have "[a] \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
       proof(cases "fst a")
         case False
           hence "[a] = insert (snd a)" by (cases a, auto simp add:insert_def)
-           with isa show "[a] \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>" by simp
+           with isa show "[a] \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>" by simp
        next
         case True
           from `snd a \<in> gens`
@@ -442,18 +442,18 @@ proof
             by (cases a, auto simp add:insert_def inv_fg_def inv1_def)
           moreover
           from isa
-          have "inv\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> (insert (snd a)) \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+          have "inv\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub> (insert (snd a)) \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
             by (auto intro:gen_inv)
           ultimately
-          show "[a] \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+          show "[a] \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
             by simp
       qed
       ultimately 
-      have "mult \<F>\<^bsub>gens\<^esub> [a] x \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
+      have "mult \<F>\<^bsub>gens\<^esub> [a] x \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>"
         by (auto intro:gen_mult)
       with
       `a # x \<in> carrier \<F>\<^bsub>gens\<^esub>`
-      show "a # x \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>" by (simp add:free_group_def)
+      show "a # x \<in> \<langle>insert ` gens\<rangle>\<^bsub>\<F>\<^bsub>gens\<^esub>\<^esub>" by (simp add:free_group_def)
     qed
   qed
 qed

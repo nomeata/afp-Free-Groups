@@ -33,48 +33,48 @@ abbreviation "int_group"
 lemma replicate_set_eq[simp]: "\<forall>x \<in> set xs. x = y \<Longrightarrow> xs = replicate (length xs) y"
   by(induct xs)auto
 
-lemma int_group_gen_by_one: "\<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub> = carrier int_group"
+lemma int_group_gen_by_one: "\<langle>{1}\<rangle>\<^bsub>int_group\<^esub> = carrier int_group"
 proof
-  show "\<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub> \<subseteq> carrier int_group"
+  show "\<langle>{1}\<rangle>\<^bsub>int_group\<^esub> \<subseteq> carrier int_group"
     by auto
-  show "carrier int_group \<subseteq> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>"
+  show "carrier int_group \<subseteq> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>"
   proof
     interpret int: group int_group by (rule int.a_group)
     fix x
-    have plus1: "1 \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>"
+    have plus1: "1 \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>"
       by (auto intro:gen_span.gen_gens)
-    hence "inv\<^bsub>int_group\<^esub> 1 \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>"
+    hence "inv\<^bsub>int_group\<^esub> 1 \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>"
       by (auto intro:gen_span.gen_inv)
     moreover
     have "-1 = inv\<^bsub>int_group\<^esub> 1" 
       by (auto intro: int.inv_equality)
     ultimately
-    have minus1: "-1 \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>"
+    have minus1: "-1 \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>"
       by (simp)
 
-    show "x \<in> \<guillemotleft>{1::int}\<guillemotright>\<^bsub>int_group\<^esub>"
+    show "x \<in> \<langle>{1::int}\<rangle>\<^bsub>int_group\<^esub>"
     (* It does not work directly, unfortunately:
     apply(induct x rule:int_induct[of _ "0::int"])
     apply (auto simp add: int_arith_rules intro:gen_span.intros[of int_group])
     *)
     proof(induct x rule:int_induct[of _ "0::int"])
     case base
-      have "\<one>\<^bsub>int_group\<^esub> \<in> \<guillemotleft>{1\<Colon>int}\<guillemotright>\<^bsub>int_group\<^esub>"
+      have "\<one>\<^bsub>int_group\<^esub> \<in> \<langle>{1\<Colon>int}\<rangle>\<^bsub>int_group\<^esub>"
         by (rule gen_span.gen_one)
-      thus"0 \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>"
+      thus"0 \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>"
         by simp
     next
     case (step1 i)
-      from `i \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>` and plus1
-      have "i \<otimes>\<^bsub>int_group\<^esub> 1 \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>" 
+      from `i \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>` and plus1
+      have "i \<otimes>\<^bsub>int_group\<^esub> 1 \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>" 
         by (rule gen_span.gen_mult)
-      thus "i + 1 \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>" by simp
+      thus "i + 1 \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>" by simp
     next
     case (step2 i)
-      from `i \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>` and minus1
-      have "i \<otimes>\<^bsub>int_group\<^esub> -1 \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>" 
+      from `i \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>` and minus1
+      have "i \<otimes>\<^bsub>int_group\<^esub> -1 \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>" 
         by (rule gen_span.gen_mult)
-      thus "i - 1 \<in> \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>" 
+      thus "i - 1 \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>" 
         by (simp add: int_arith_rules)
     qed
   qed
@@ -172,16 +172,16 @@ proof-
     by (auto simp add:free_group_def)
   moreover
   {
-    have "carrier \<F>\<^bsub>{()}\<^esub> = \<guillemotleft>insert`{()}\<guillemotright>\<^bsub>\<F>\<^bsub>{()}\<^esub>\<^esub>"
+    have "carrier \<F>\<^bsub>{()}\<^esub> = \<langle>insert`{()}\<rangle>\<^bsub>\<F>\<^bsub>{()}\<^esub>\<^esub>"
       by (rule gens_span_free_group[THEN sym])
     moreover
-    have "carrier int_group = \<guillemotleft>{1}\<guillemotright>\<^bsub>int_group\<^esub>"
+    have "carrier int_group = \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>"
       by (rule int_group_gen_by_one[THEN sym])
     moreover
     have "int.lift f ` insert ` {()} = {1}"
       by (auto simp add: int.lift_def insert_def f_def int.lift_gi_def)   
     moreover
-    have  "int.lift f ` \<guillemotleft>insert`{()}\<guillemotright>\<^bsub>\<F>\<^bsub>{()}\<^esub>\<^esub> = \<guillemotleft>int.lift f ` (insert `{()})\<guillemotright>\<^bsub>int_group\<^esub>"
+    have  "int.lift f ` \<langle>insert`{()}\<rangle>\<^bsub>\<F>\<^bsub>{()}\<^esub>\<^esub> = \<langle>int.lift f ` (insert `{()})\<rangle>\<^bsub>int_group\<^esub>"
       by (rule hom.hom_span, auto intro:insert_closed)
     ultimately
     have "int.lift f ` carrier \<F>\<^bsub>{()}\<^esub> = carrier int_group"
