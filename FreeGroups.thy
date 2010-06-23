@@ -1,6 +1,6 @@
 header {* The Free Group *}
 
-theory "Free-Groups"
+theory "FreeGroups"
 imports
    "~~/src/HOL/Algebra/Group"
    "Cancelation"
@@ -228,7 +228,7 @@ next
 qed
 
 lemma inv_is_inv_fg[simp]:
-  "x \<in> carrier (free_group gens) \<Longrightarrow> m_inv (free_group gens) x = inv_fg x"
+  "x \<in> carrier (free_group gens) \<Longrightarrow> inv\<^bsub>free_group gens\<^esub> x = inv_fg x"
 by (rule group.inv_equality,auto simp add:free_group_is_group,auto simp add: free_group_def inv_fg_cancel inv_fg_cancel2 inv_fg_closure1 inv_fg_closure2)
 
 
@@ -241,8 +241,12 @@ homomorphism from the Free Group. *}
 definition insert
   where "insert g = [(False, g)]"
 
+lemma insert_closed:
+  "g \<in> gens \<Longrightarrow> insert g \<in> carrier (free_group gens)"
+  by (auto simp add:insert_def free_group_def occuring_generators_def)
+
 definition (in group) lift_gi
-  where "lift_gi f gi = (if fst gi then m_inv G (f (snd gi)) else f (snd gi))"
+  where "lift_gi f gi = (if fst gi then inv (f (snd gi)) else f (snd gi))"
 
 lemma (in group) lift_gi_closed:
   assumes cl: "f ` gens \<subseteq> carrier G"
@@ -284,7 +288,7 @@ proof-
     by (induct y)(auto simp add:lift_gi_closed)
   ultimately
   show "lift f (x @ y) = lift f x \<otimes> lift f y"
-    by (auto simp add:lift_def m_assoc simp del:set_map foldl_append)
+    by (auto simp add:lift_def m_assoc simp del:set_map foldr_append)
 qed
 
 lemma (in group) lift_cancels_to:
@@ -358,7 +362,7 @@ proof-
     hence "set (map snd x) \<subseteq> gens"
       unfolding free_group_def and occuring_generators_def by simp
     hence "lift f x \<in> carrier G"
-     using cl by (induct x rule:rev_induct, auto simp add:lift_def lift_gi_closed)
+     using cl by (induct x, auto simp add:lift_def lift_gi_closed)
   } 
   moreover
   { fix x
@@ -392,63 +396,63 @@ proof-
 qed
 
 lemma gens_span_free_group:
-shows "gen_span (free_group gens) (insert ` gens) = carrier (free_group gens)"
+shows "\<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub> = carrier (free_group gens)"
 proof
-  interpret group "free_group gens" by(rule free_group_is_group)
-  show "gen_span (free_group gens) (insert ` gens) \<subseteq> carrier (free_group gens)"
+  interpret group "free_group gens" by (rule free_group_is_group)
+  show "\<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub> \<subseteq> carrier (free_group gens)"
   by(rule gen_span_closed, auto simp add:insert_def free_group_def occuring_generators_def)
 
-  show "carrier (free_group gens)  \<subseteq> gen_span (free_group gens) (insert ` gens)"
+  show "carrier (free_group gens)  \<subseteq> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
   proof
     fix x
-    show "x \<in> carrier (free_group gens) \<Longrightarrow> x \<in> gen_span (free_group gens) (insert ` gens)"
+    show "x \<in> carrier (free_group gens) \<Longrightarrow> x \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
     proof(induct x)
     case Nil
-      have "one (free_group gens) \<in> gen_span (free_group gens) (insert ` gens)"
+      have "one (free_group gens) \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
         by simp
-      thus "[] \<in> gen_span (free_group gens) (insert ` gens)"
+      thus "[] \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
         by (simp add:free_group_def)
     next
     case (Cons a x)
       from `a # x \<in> carrier (free_group gens)`
       have "x \<in> carrier (free_group gens)"
         by (auto intro:cons_canceled simp add:free_group_def occuring_generators_def)
-      hence "x \<in> gen_span (free_group gens) (insert ` gens)"
+      hence "x \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
         using Cons by simp
       moreover
 
       from `a # x \<in> carrier (free_group gens)`
       have "snd a \<in> gens"
         by (auto simp add:free_group_def occuring_generators_def)
-      hence isa: "insert (snd a) \<in> gen_span (free_group gens) (insert ` gens)"
+      hence isa: "insert (snd a) \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
         by (auto simp add:insert_def intro:gen_gens)
-      have "[a] \<in> gen_span (free_group gens) (insert ` gens)"
+      have "[a] \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
       proof(cases "fst a")
         case False
           hence "[a] = insert (snd a)" by (cases a, auto simp add:insert_def)
-           with isa show "[a] \<in> gen_span (free_group gens) (insert ` gens)" by simp
+           with isa show "[a] \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>" by simp
        next
         case True
           from `snd a \<in> gens`
           have "insert (snd a) \<in> carrier (free_group gens)" 
             by (simp add:free_group_def insert_def  occuring_generators_def)
           with True
-          have "[a] = m_inv (free_group gens) (insert (snd a))"
+          have "[a] = inv\<^bsub>free_group gens\<^esub> (insert (snd a))"
             by (cases a, auto simp add:insert_def inv_fg_def inv1_def)
           moreover
           from isa
-          have "m_inv (free_group gens) (insert (snd a)) \<in> gen_span (free_group gens) (insert ` gens)"
+          have "inv\<^bsub>free_group gens\<^esub> (insert (snd a)) \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
             by (auto intro:gen_inv)
           ultimately
-          show "[a] \<in> gen_span (free_group gens) (insert ` gens)"
+          show "[a] \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
             by simp
       qed
       ultimately 
-      have "mult (free_group gens) [a] x \<in> gen_span (free_group gens) (insert ` gens)"
+      have "mult (free_group gens) [a] x \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>"
         by (auto intro:gen_mult)
       with
       `a # x \<in> carrier (free_group gens)`
-      show "a # x \<in> gen_span (free_group gens) (insert ` gens)" by (simp add:free_group_def)
+      show "a # x \<in> \<guillemotleft>insert ` gens\<guillemotright>\<^bsub>free_group gens\<^esub>" by (simp add:free_group_def)
     qed
   qed
 qed
@@ -466,7 +470,7 @@ next
   show "group G" by fact
 next
   show "insert ` gens \<subseteq> carrier (free_group gens)"
-    by(auto simp add:insert_def free_group_def occuring_generators_def)
+    by(auto intro:insert_closed)
 next
   show "h \<in> hom (free_group gens) G" by fact
 next

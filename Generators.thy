@@ -181,22 +181,38 @@ text {* Not strictly related to generators of groups, this is still a general
 group concept and not related to FreeGroups. *}
 
 abbreviation (in monoid) m_concat
-  where "m_concat \<equiv> foldl (op \<otimes>) \<one>"
+  where "m_concat l \<equiv> foldr (op \<otimes>) l \<one>"
 
 lemma (in monoid) m_concat_closed[simp]:
  "set l \<subseteq> carrier G \<Longrightarrow> m_concat l \<in> carrier G"
-  by (induct l rule:rev_induct, auto)
+  by (induct l, auto)
 
 lemma (in monoid) m_concat_append[simp]:
   assumes "set a \<subseteq> carrier G"
       and "set b \<subseteq> carrier G"
   shows "m_concat (a@b) = m_concat a \<otimes> m_concat b"
 using assms
-by(induct b rule:rev_induct)(auto simp add: m_assoc)
+by(induct a)(auto simp add: m_assoc)
 
 lemma (in monoid) m_concat_cons[simp]:
   "\<lbrakk> x \<in> carrier G ; set xs \<subseteq> carrier G \<rbrakk> \<Longrightarrow> m_concat (x#xs) = x \<otimes> m_concat xs"
-by(induct xs rule:rev_induct)(auto simp add: m_assoc)
+by(induct xs)(auto simp add: m_assoc)
+
+
+lemma (in monoid) nat_pow_mult1l:
+  assumes x: "x \<in> carrier G"
+  shows "x \<otimes> x (^) n = x (^) Suc n"
+proof-
+  have "x \<otimes> x (^) n = x (^) (1::nat) \<otimes> x (^) n " using x by auto
+  also have "\<dots> = x (^) (1 + n)" using x 
+       by (auto dest:nat_pow_mult simp del:One_nat_def)
+  also have "\<dots> = x (^) Suc n" by simp
+  finally show "x \<otimes> x (^) n = x (^) Suc n" .
+qed
+
+lemma (in monoid) m_concat_power[simp]: "x \<in> carrier G \<Longrightarrow> m_concat (replicate n x) = x (^) n"
+by(induct n, auto simp add:nat_pow_mult1l)
+
 
 subsection {* Isomorphisms *}
 
@@ -211,20 +227,47 @@ proof-
   thus "h \<in> hom g1 g2" using hom unfolding hom_def by auto
 qed
 
+lemma (in group_hom) hom_injI:
+  assumes "\<forall>x\<in>carrier G. h x = \<one>\<^bsub>H\<^esub> \<longrightarrow> x = \<one>\<^bsub>G\<^esub>"
+  shows "inj_on h (carrier G)"
+unfolding inj_on_def
+proof(rule ballI, rule ballI, rule impI)
+  fix x
+  fix y
+  assume x: "x\<in>carrier G"
+     and y: "y\<in>carrier G"
+     and "h x = h y"
+  hence "h (x \<otimes> inv y) = \<one>\<^bsub>H\<^esub>" and "x \<otimes> inv y \<in> carrier G"
+    by auto
+  with assms
+  have "x \<otimes> inv y = \<one>" by auto
+  thus "x = y" using x and y 
+    by(auto dest: G.inv_equality)
+qed
+
 lemma group_isoI[intro]:
-  assumes inj: "inj_on h (carrier g1)"
-      and surj: "h ` (carrier g1) = carrier g2"
-      and hom: "\<forall>x\<in>carrier g1. \<forall>y\<in>carrier g1. h (x \<otimes>\<^bsub>g1\<^esub> y) = h x \<otimes>\<^bsub>g2\<^esub> h y"
-  shows "h \<in> g1 \<cong> g2"
+  assumes G: "group G"
+      and H: "group H"
+      and inj1: "\<forall>x\<in>carrier G. h x = \<one>\<^bsub>H\<^esub> \<longrightarrow> x = \<one>\<^bsub>G\<^esub>"
+      and surj: "h ` (carrier G) = carrier H"
+      and hom: "\<forall>x\<in>carrier G. \<forall>y\<in>carrier G. h (x \<otimes>\<^bsub>G\<^esub> y) = h x \<otimes>\<^bsub>H\<^esub> h y"
+  shows "h \<in> G \<cong> H"
 proof-
-  from inj and surj
-  have bij: "bij_betw h (carrier g1) (carrier g2)"
-    unfolding bij_betw_def by (rule conjI)
-  hence "h \<in> carrier g1 \<rightarrow> carrier g2"
-    by (rule bij_betw_imp_funcset)
-  with hom have "h \<in> hom g1 g2"
+  from surj
+  have "h \<in> carrier G \<rightarrow> carrier H"
+    by auto
+  with hom have "h \<in> hom G H"
     unfolding hom_def by auto
-  with bij show "h \<in> g1 \<cong> g2"
+  then interpret group_hom G H h using G and H 
+    by (auto intro!: group_hom.intro group_hom_axioms.intro)
+  
+  from inj1
+  have "inj_on h (carrier G)" 
+    by(auto intro: hom_injI)
+  hence bij: "bij_betw h (carrier G) (carrier H)"
+    using surj  unfolding bij_betw_def by auto
+  thus "h \<in> G \<cong> H"
+    using `h \<in> hom G H`
     unfolding iso_def by auto
 qed
 
