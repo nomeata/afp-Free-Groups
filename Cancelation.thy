@@ -16,7 +16,7 @@ form, allowing for the definition of @{term normalize}.
 subsection {* Auxillary results *}
 
 text {* Some lemmas that would be useful in a more general setting are
-collected beforehand *}
+collected beforehand. *}
 
 subsubsection {* Auxillary results about relations *}
 
@@ -39,99 +39,6 @@ lemma confluent_unique_normal_form:
   "\<lbrakk> confluent R; R^** a b; R^** a c; \<not> DomainP R b; \<not> DomainP R c  \<rbrakk> \<Longrightarrow> b = c"
 by(fastsimp dest!: confluentD[of R a b c] dest: tranclp_DomainP rtranclpD[where a=b] rtranclpD[where a=c])
 
-subsubsection {* Auxillary results about @{text prod_fun} *}
-
-text {* Two simple rules that would fit well in @{theory Product_Type}, where there
-   already is @{term snd_apnsnd} et. al. *}
-lemma fst_prod_fun[simp]: "fst (prod_fun f g x) = f (fst x)"
-  by (cases x, auto)
-lemma snd_prod_fun[simp]: "snd (prod_fun f g x) = g (snd x)"
-  by (cases x, auto)
-text {* Variants of the above as required in this theory.*}
-lemma fst_prod_fun'[simp]: "fst \<circ> prod_fun f g = f \<circ> fst"
-  by (rule,auto)
-lemma snd_prod_fun'[simp]: "snd \<circ> prod_fun f g = g \<circ> snd"
-  by (rule,auto)
-
-text {* More lemmas, relating injectivity and @{term prod_fun}. *}
-
-lemma prod_fun_inj_on:
-  assumes "inj_on f A" and "inj_on g B"
-  shows "inj_on (prod_fun f g) (A \<times> B)"
-proof (rule inj_onI)
-  fix x :: "'a \<times> 'c" and y :: "'a \<times> 'c"
-  assume "x \<in> A \<times> B" hence "fst x \<in> A" and "snd x \<in> B" by auto
-  assume "y \<in> A \<times> B" hence "fst y \<in> A" and "snd y \<in> B" by auto
-
-  assume "prod_fun f g x = prod_fun f g y"
-  hence "fst (prod_fun f g x) = fst (prod_fun f g y)" by (auto)
-  hence "f (fst x) = f (fst y)" by (cases x,cases y,auto)
-  with `inj_on f A` and `fst x \<in> A` and `fst y \<in> A`
-  have "fst x = fst y" by (auto dest:dest:inj_onD)
-  moreover
-  from `prod_fun f g x = prod_fun f g y`
-  have "snd (prod_fun f g x) = snd (prod_fun f g y)" by (auto)
-  hence "g (snd x) = g (snd y)" by (cases x,cases y,auto)
-  with `inj_on g B` and `snd x \<in> B` and `snd y \<in> B`
-  have "snd x = snd y" by (auto dest:dest:inj_onD)
-  ultimately
-  show "x = y" by(rule prod_eqI)
-qed
-
-lemma prod_fun_surj:
-  assumes "surj f" and "surj g"
-  shows "surj (prod_fun f g)"
-unfolding surj_def
-proof
-  fix y :: "'b \<times> 'd"
-  from `surj f` obtain a where "fst y = f a" by (auto elim:surjE)
-  moreover
-  from `surj g` obtain b where "snd y = g b" by (auto elim:surjE)
-  ultimately
-  have "(fst y, snd y) = prod_fun f g (a,b)" by auto
-  thus "\<exists>x. y = prod_fun f g x" by auto
-qed
-
-lemma prod_fun_surj_on:
-  assumes "f ` A = A'" and "g ` B = B'"
-  shows "prod_fun f g ` (A \<times> B) = A' \<times> B'"
-unfolding image_def
-proof(rule set_ext,rule iffI)
-    fix x :: "'a \<times> 'c"
-    assume "x \<in> {y\<Colon>'a \<times> 'c. \<exists>x\<Colon>'b \<times> 'd\<in>A \<times> B. y = prod_fun f g x}"
-    then obtain y where "y \<in> A \<times> B" and "x = prod_fun f g y" by blast
-    from `image f A = A'` and `y \<in> A \<times> B` have "f (fst y) \<in> A'" by auto
-    moreover
-    from `image g B = B'` and `y \<in> A \<times> B` have "g (snd y) \<in> B'" by auto
-    ultimately
-    have "(f (fst y), g (snd y)) \<in> (A' \<times> B')" by auto
-    with `x = prod_fun f g y` show "x \<in> A' \<times> B'" by (cases y, auto)
-next
-    fix x :: "'a \<times> 'c"
-    assume "x \<in> A' \<times> B'" hence "fst x \<in> A'" and "snd x \<in> B'" by auto
-    from `image f A = A'` and `fst x \<in> A'`
-    have "fst x \<in> image f A" by auto then
-    obtain a where "a \<in> A" and "fst x = f a" by (rule imageE)
-    moreover
-    from `image g B = B'` and `snd x \<in> B'`
-    obtain b where "b \<in> B" and "snd x = g b" by auto
-    ultimately
-    have "(fst x, snd x) = prod_fun f g (a,b)" by auto
-    moreover
-    from `a \<in> A` and  `b \<in> B` have "(a , b) \<in> A \<times> B" by auto
-    ultimately
-    have "\<exists>y \<in> A \<times> B. x = prod_fun f g y" by auto
-    thus "x \<in> {x. \<exists>y \<in> A \<times> B. x = prod_fun f g y}" by auto
-qed
-
-subsubsection {* Injectivity and subset *}
-
-text {* Injectivity of a function also holds on a subset of the domain. *}
-
-lemma inj_on_subset:
-  "\<lbrakk> inj_on f A ; B \<subseteq> A \<rbrakk> \<Longrightarrow> inj_on f B"
-by (auto intro!: inj_onI dest:inj_onD dest:subsetD)
-
 subsection {* Definition of the @{term "canceling"} relation *}
 
 types 'a "g_i" = "(bool \<times> 'a)" (* A generator or its inverse *)
@@ -142,17 +49,15 @@ These type aliases encode the notion of a ``generator or its inverse''
 (@{typ "'a g_i"}) and the notion of a ``word in generators and their inverses''
 (@{typ "'a word_g_i"}), which form the building blocks of Free Groups.
 *}
-(* Too bad I cannot use antiquotations _before_ the definition, it would make
-the text easier to read. *)
 
 definition canceling :: "'a g_i \<Rightarrow> 'a g_i \<Rightarrow> bool"
  where "canceling a b = ((snd a = snd b) \<and> (fst a \<noteq> fst b))"
 
-text {*
-A generators cancels with its inverse, either way.
-*}
-
 subsubsection {* Simple results about canceling *}
+
+text {*
+A generators cancels with its inverse, either way. The relation is symmetic.
+*}
 
 lemma cancel_cancel: "\<lbrakk> canceling a b; canceling b c \<rbrakk> \<Longrightarrow> a = c"
 by (auto intro: prod_eqI simp add:canceling_def)
@@ -469,7 +374,7 @@ proof-
     by (rule confluent_unique_normal_form)
 qed
 
-subsubsection {* Some properties on cancelation *}
+subsubsection {* Some properties of cancelation *}
 
 text {*
 Distributivity rules of cancelation and @{text append}.
@@ -661,7 +566,7 @@ next
   show "cancels_to (l1 @ l2) (normalize (l1' @ l2'))".
 qed
 
-subsection {* Normalization preserves elements *}
+subsection {* Normalization preserves generators *}
 
 text {*
 Somewhat obvious, but still required to formalize Free Groups, is the fact that

@@ -98,11 +98,11 @@ qed
 
 subsection {* Sets of generators *}
 
-text {* There is no definition for @{text gens} is a generating set of
-@{text G}. This is easily expressed by @{text "\<langle>gens\<rangle> = carrier G"}. *}
+text {* There is no definition for ``@{text gens} is a generating set of
+@{text G}''. This is easily expressed by @{text "\<langle>gens\<rangle> = carrier G"}. *}
 
-text {* The following is application of @{text hom_unique_on_span} on a generating
-  set of the whole group. *}
+text {* The following is an application of @{text hom_unique_on_span} on a
+generating set of the whole group. *}
 
 lemma (in group) hom_unique_by_gens:
   assumes "group H"
@@ -133,7 +133,6 @@ proof(rule set_ext, rule iffI)
   from `x \<in> \<langle>gens\<rangle>\<^bsub>G\<^esub>`
   have "h x \<in> \<langle>h ` gens\<rangle>\<^bsub>H\<^esub>"
   proof(induct x)
-    print_cases
     case (gen_inv x)
     hence "x \<in> carrier G" and "h x \<in> \<langle>h ` gens\<rangle>\<^bsub>H\<^esub>"
       using `\<langle>gens\<rangle>\<^bsub>G\<^esub> \<subseteq> carrier G`
@@ -153,7 +152,6 @@ next
   fix x
   show "x \<in> \<langle>h ` gens\<rangle>\<^bsub>H\<^esub> \<Longrightarrow> x \<in> h ` \<langle>gens\<rangle>"
   proof(induct x rule:gen_span.induct)
-  print_cases
     case (gen_inv y)
       then  obtain x where "y = h x" and "x \<in> \<langle>gens\<rangle>" by auto
       moreover
@@ -178,7 +176,7 @@ qed
 subsection {* Product of a list of group elements *}
 
 text {* Not strictly related to generators of groups, this is still a general
-group concept and not related to FreeGroups. *}
+group concept and not related to Free Groups. *}
 
 abbreviation (in monoid) m_concat
   where "m_concat l \<equiv> foldr (op \<otimes>) l \<one>"
@@ -216,7 +214,8 @@ by(induct n, auto simp add:nat_pow_mult1l)
 
 subsection {* Isomorphisms *}
 
-text {* Nicer way of proving that something is a group homomorphism or isomorphism *}
+text {* A nicer way of proving that something is a group homomorphism or
+isomorphism. *}
 
 lemma group_homI[intro]:
   assumes range: "h ` (carrier g1) \<subseteq> carrier g2"

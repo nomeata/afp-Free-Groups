@@ -52,8 +52,8 @@ proof
     have minus1: "-1 \<in> \<langle>{1}\<rangle>\<^bsub>int_group\<^esub>"
       by (simp)
 
-    show "x \<in> \<langle>{1::int}\<rangle>\<^bsub>int_group\<^esub>"
-    (* It does not work directly, unfortunately:
+    show "x \<in> \<langle>{1::int}\<rangle>\<^bsub>int_group\<^esub>" (*
+    It does not work directly, unfortunately:
     apply(induct x rule:int_induct[of _ "0::int"])
     apply (auto simp add: int_arith_rules intro:gen_span.intros[of int_group])
     *)
@@ -82,10 +82,6 @@ qed
 
 lemma free_group_over_one_gen: "\<exists>h. h \<in> \<F>\<^bsub>{()}\<^esub> \<cong> int_group"
 proof-
-  thm abelian_group.a_group
-  thm int.a_group
-  thm group.lift_is_hom
-
   interpret int: group int_group by (rule int.a_group)
 
   def f \<equiv> "\<lambda>(x::unit).(1::int)"
@@ -120,11 +116,14 @@ proof-
         hence "fst (x ! Suc i) \<noteq> fst a" by (cases "x ! Suc i", cases "a", auto)
         moreover
         {
-          have "takeWhile (\<lambda>y. y = a) x ! i = x ! i" using i by (auto intro: takeWhile_nth)
+          have "takeWhile (\<lambda>y. y = a) x ! i = x ! i"
+            using i by (auto intro: takeWhile_nth)
           moreover
-          have "(takeWhile (\<lambda>y. y = a) x) ! i \<in> set (takeWhile (\<lambda>y. y = a) x)" using i by auto
+          have "(takeWhile (\<lambda>y. y = a) x) ! i \<in> set (takeWhile (\<lambda>y. y = a) x)"
+            using i by auto
           ultimately
-          have "(\<lambda>y. y = a) (x ! i)" by (auto dest:set_takeWhileD)
+          have "(\<lambda>y. y = a) (x ! i)"
+            by (auto dest:set_takeWhileD)
         }
         hence "fst (x ! i) = fst a" by auto
         moreover
@@ -152,7 +151,7 @@ proof-
       also have "... = pow int_group (int.lift_gi f a) (length x)"
         by (induct x,auto simp add:int.lift_def)
       also have "... = (int.lift_gi f a) * int (length x)"
-        by (induct "length x", auto simp add:int_distrib)
+        by (induct ("length x"), auto simp add:int_distrib)
       finally have "\<dots> = 0" using `int.lift f x = 0` by simp
       hence "nat (abs (group.lift_gi int_group f a * int (length x))) = 0" by simp
       hence "nat (abs (group.lift_gi int_group f a)) * length x = 0" by simp
@@ -198,8 +197,8 @@ subsection {* Free Groups over isomorphic sets of generators *}
 
 text {* Free Groups are isomorphic if their set of generators are isomorphic. The
 converse holds as well, but is not shown here. That result could be achieved by
-showing that it holds for free abelian groups, which are the abelianization of
-free groups. *}
+showing that it holds for free abelian groups @{text "\<int>\<^bsup>gens\<^esup>"},
+which are the abelianization of Free Groups. *}
 
 definition lift_generator_function :: "('a \<Rightarrow> 'b) \<Rightarrow> (bool \<times> 'a) list \<Rightarrow> (bool \<times> 'b) list"
 where "lift_generator_function f = map (prod_fun id f)"
@@ -331,7 +330,7 @@ next
   hence "occuring_generators (x@y) \<subseteq> gens1"
     by(auto simp add:occuring_generators_def)
   with `inj_on f gens1` have "inj_on f (occuring_generators (x@y))"
-    by (rule inj_on_subset)
+    by (rule subset_inj_on)
 
   have "map (prod_fun id f) (x \<otimes>\<^bsub>\<F>\<^bsub>gens1\<^esub>\<^esub> y)
        = map (prod_fun id f) (normalize (x@y))" by (simp add:free_group_def)
